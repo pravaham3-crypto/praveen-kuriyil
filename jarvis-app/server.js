@@ -262,5 +262,6 @@ const server=http.createServer((req,res)=>{
 server.listen(PORT,'0.0.0.0',()=>{
  console.log(`JARVIS General Brain v6 on ${PORT}. Mode: ${aiAvailable?provider+' cloud AI':'AXIOM rules core'}.`);
  // Non-sensitive one-time connectivity probe; never log financial content or credentials.
+ fetchRecentHeadlines('US stock market').then(d=>console.log('JARVIS recent-news probe: '+d.articles.length+' dated headlines available.')).catch(e=>console.warn('JARVIS recent-news probe failed: '+e.message));
  if(WEALTH_EXPORT_URL)readConfiguredExport('wealth').then(x=>{const d=x.data;console.log('JARVIS wealth export probe: JSON type='+typeof d+', topLevelKeys='+(d&&typeof d==='object'?Object.keys(d).slice(0,24).join('|'):'none')+', records='+String(Array.isArray(d)?d.length:('none')));}).catch(e=>console.warn('JARVIS wealth export probe: '+e.message));
 });
