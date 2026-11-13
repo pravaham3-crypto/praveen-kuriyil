@@ -41,7 +41,7 @@ For direct sync, the source app must publish a **read-only JSON or CSV export en
 
 Source: https://family-wealth-dashboard-public-pravaham3-5020s-projects.vercel.app/
 
-Direct sync requires an authorized, **read-only** JSON/CSV export endpoint in that Vercel project. The connected Vercel account did not enumerate this project; the site could not be inspected, so no endpoint or data schema is assumed. After an endpoint is created and verified, configure `WEALTH_EXPORT_URL` (https://*.vercel.app) and optional `WEALTH_EXPORT_TOKEN` in Render.
+A machine-readable, read-only JSON bridge at `https://family-wealth-dashboard-public-pravaham3-5020s-projects.vercel.app/api/bridge` was verified from Render on 2026-11-13. Its response includes `generatedAt`, `fx`, `mf`, `trading`, and `dashboardState` sections. `WEALTH_EXPORT_URL` is already configured in Render. In JARVIS enter your access code, open **Wealth 2034**, then choose **Refresh sourced wealth data**. Verify the source timestamp and individual holdings independently; this bridge is not a real-time broker connection. The Vercel project is not accessible through the connected Vercel account, so its backend has not been modified.
 
 Until then, export a CSV/JSON file from the wealth dashboard and import it via the JARVIS Data Connections tab. The imported snapshot is displayed with source, row count and date when provided. Imported files stay in browser tab memory; JARVIS does not silently save financial records on the server.
 
