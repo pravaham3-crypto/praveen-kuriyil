@@ -575,7 +575,7 @@ function jarvisSetOrb(next,message,detail){
  const status=document.getElementById('newsStatus');
  const query=document.getElementById('newsQuery');
  const escapeNews=str=>String(str||'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
- function linkAllowed(url){try{const u=new URL(url);return u.protocol==='https:'&&u.hostname==='news.google.com'}catch(e){return false}}
+ function linkAllowed(url){try{const u=new URL(url);return u.protocol==='https:'&&['news.google.com','www.bing.com','www.bbc.com','www.bbc.co.uk','bbc.co.uk','bbc.com'].includes(u.hostname)}catch(e){return false}}
  search.onclick=async function(){
   const privateCode=document.getElementById('accessCode').value;
   if(!privateCode){status.textContent='Open Voice Assistant first and enter your private JARVIS access code.';return}
