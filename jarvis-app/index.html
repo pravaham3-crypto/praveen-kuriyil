@@ -143,7 +143,7 @@ header .headerTalk{background:#153b51;border:1px solid #4baec6;color:#a7f5ff;pad
 @media(max-width:620px){.jarvis-orb .orb-stage{transform:scale(.71);transform-origin:center;margin:-61px auto -61px;width:470px;max-width:none;left:50%;margin-left:-235px}.jarvis-orb .small-marker{display:none}.jarvis-orb .control{min-width:91px;padding:11px 9px}.jarvis-orb .topbar{padding:15px}.jarvis-orb .center{padding:20px 8px 14px}.jarvis-orb .brand-title{font-size:12px}.jarvis-orb .brand-sub{font-size:8px}.jarvis-orb .bottombar{padding:14px;font-size:9px}.jarvis-orb .controls{gap:7px}}
 @media(max-width:380px){.jarvis-orb .orb-stage{transform:scale(.63);margin:-78px auto -78px;margin-left:-235px}.jarvis-orb .control{min-width:83px;font-size:10px}}
 
-</style></head><body><aside><div class="logo">◉ JARVIS</div><button class="nav active" data-tab="overview">◈ Overview</button><button class="nav" data-tab="radar">◎ Pre-Breakout Radar</button><button class="nav" data-tab="planner">⌖ Trade Planner</button><button class="nav" data-tab="portfolio">▥ Portfolio KPIs</button><button class="nav" data-tab="wealth">◇ Wealth 2034</button><button class="nav" data-tab="voice">◉ Voice Assistant</button><button class="nav" data-tab="notes">▤ Research Notes</button><div class="sidefoot">JARVIS AXIOM · Hybrid Voice<br>Sample metrics · No broker feed</div></aside><main><header><div><h1 id="pageTitle">Command Overview</h1><div class="muted small">AXIOM Intelligence · Sample data only · No live market feed</div></div><button type="button" id="headerTalk" class="headerTalk">🎙 Voice Command</button><span class="tag">● DEMO / OFFLINE DATA</span></header><div class="notice">Dashboard prices, scores and KPIs below are illustrative, not live AXIOM or broker data. Your existing scanner and performance dashboard open separately through the workspace links; no automatic data sync or trade execution is enabled. The cloud AI provider has its own connection status.</div>
+</style></head><body><aside><div class="logo">◉ JARVIS</div><button class="nav active" data-tab="overview">◈ Overview</button><button class="nav" data-tab="radar">◎ Pre-Breakout Radar</button><button class="nav" data-tab="planner">⌖ Trade Planner</button><button class="nav" data-tab="portfolio">▥ Portfolio KPIs</button><button class="nav" data-tab="wealth">◇ Wealth 2034</button><button class="nav" data-tab="connections">⇄ Data Connections</button><button class="nav" data-tab="voice">◉ Voice Assistant</button><button class="nav" data-tab="notes">▤ Research Notes</button><div class="sidefoot">JARVIS AXIOM · Hybrid Voice<br>Sample metrics · No broker feed</div></aside><main><header><div><h1 id="pageTitle">Command Overview</h1><div class="muted small">AXIOM Intelligence · Sample data only · No live market feed</div></div><button type="button" id="headerTalk" class="headerTalk">🎙 Voice Command</button><span class="tag">● DEMO / OFFLINE DATA</span></header><div class="notice">Dashboard prices, scores and KPIs below are illustrative, not live AXIOM or broker data. Your existing scanner and performance dashboard open separately through the workspace links; no automatic data sync or trade execution is enabled. The cloud AI provider has its own connection status.</div>
 <section id="overview" class="tab active"><div class="panel" style="margin-bottom:15px">
 <h2>AXIOM Workspaces · Quick Access</h2>
 <p class="small">Open your actual scanner, performance dashboard and wealth planner from one place. These links do not yet sync live data into JARVIS.</p>
@@ -157,6 +157,47 @@ header .headerTalk{background:#153b51;border:1px solid #4baec6;color:#a7f5ff;pad
 <section id="planner" class="tab"><div class="panel"><h2>Trade Execution Planner · Simulation</h2><div class="formgrid"><div><label>Account equity (USD)</label><input id="equity" type="number" value="21000" min="1"></div><div><label>Entry price (USD)</label><input id="entry" type="number" value="100" min=".01" step=".01"></div><div><label>Position allocation (%)</label><input id="allocation" type="number" value="12" min="0" max="25" step="1"></div><div><label>Initial stop (%)</label><input id="stopPct" type="number" value="7" readonly></div><div><label>Profit target (%)</label><input id="targetPct" type="number" value="15" min="1"></div><div><label>Risk budget (% of equity)</label><input id="riskBudget" type="number" value="1" min="0.1" max="10" step="0.1"></div></div><div class="grid" id="planResults"></div><p class="small">Quantity is limited by both allocation and risk budget. Stop prices are theoretical and not guaranteed fills. The 7% initial stop is fixed for this demonstration.</p></div></section>
 <section id="portfolio" class="tab"><div class="grid"><div class="panel"><h3>Example Equity</h3><div class="value">$21,044</div></div><div class="panel"><h3>Win Rate</h3><div class="value green">63.6%</div></div><div class="panel"><h3>Expectancy</h3><div class="value">1.79%</div></div><div class="panel"><h3>Max Drawdown</h3><div class="value orange">−11.68%</div></div></div><div class="panel"><h2>Illustrative Performance KPIs</h2><p>66 sample closed trades · Historical example realized P&amp;L $5,944 · Sample return 39.37% · Profit factor: not available without gross win/loss ledger.</p><p class="small">These are fixed demonstration figures, not a live portfolio or a verified current account statement.</p></div></section>
 <section id="wealth" class="tab"><div class="grid"><div class="panel"><h3>2034 Goal</h3><div class="value">₹5 crore</div></div><div class="panel"><h3>India MF Target Allocation</h3><div class="value">60%</div></div><div class="panel"><h3>US Stocks</h3><div class="value">20%</div></div><div class="panel"><h3>Other Assets</h3><div class="value">20%</div></div></div><div class="two"><div class="panel"><h2>Illustrative SIP Projection</h2><div class="formgrid"><div><label>Starting investments (₹)</label><input id="initialINR" type="number" value="1500000"></div><div><label>Annual return assumption (%)</label><input id="cagr" type="number" value="12" min="-50" max="40"></div><div><label>Years</label><input id="years" type="number" value="8" min="1" max="40"></div></div><div class="value cyan" id="wealthResult"></div><div class="small">Model: ₹1 lakh monthly for first 12 months, then ₹2 lakh monthly. Monthly compounding, deposits at month-end. Scenario only; returns are not guaranteed.</div></div><div class="panel"><h2>Target Asset Mix</h2><div id="assetMix"></div><p class="small">Real estate allocation marked achieved in the user's roadmap; values here are planning percentages, not verified holdings.</p></div></div></section>
+
+<section id="connections" class="tab">
+ <div class="panel" style="margin-bottom:15px">
+  <h2>Read-only Data Connection Hub</h2>
+  <p class="small">Connect real source snapshots without altering AXIOM algorithms, trading permissions or dashboard records. Imported files remain in this browser tab's memory. Dates and source labels are shown so stale or sample data are not presented as live.</p>
+  <div class="buttons"><button class="btn" id="checkSources" type="button">Check connection settings</button><span id="connectionStatus" class="small">Enter your private code in Voice Assistant first.</span></div>
+ </div>
+ <div class="two">
+  <div class="panel">
+   <h2>1 · AXIOM Pre-Breakout Scanner</h2>
+   <div class="small">Private GitHub snapshot: prebreakout_long.csv · Research only, not live ticks or verified orders</div>
+   <div class="buttons"><button type="button" id="syncScanner" class="btn">Sync scanner now</button><a target="_blank" rel="noopener noreferrer" href="https://github.com/pravaham3-crypto/ai-long-short-scanner/blob/main/snapshots/prebreakout_long.csv">Open source CSV</a></div>
+   <label for="importScanner">Or import a CSV/JSON file</label><input type="file" id="importScanner" accept=".csv,.json,text/csv,application/json">
+   <p id="scannerInfo" class="small">Not connected. Automatic read-only access needs AXIOM_GITHUB_READ_TOKEN in Render.</p>
+   <div id="scannerPreview" class="small" style="overflow:auto;max-height:320px"></div>
+  </div>
+  <div class="panel">
+   <h2>2 · AXIOM Performance KPIs</h2>
+   <div class="small">Realized trading performance, expectancy, profit factor and open risk: sourced from your existing ledger, not JARVIS demo values</div>
+   <div class="buttons"><button type="button" id="syncPerformance" class="btn">Sync KPI export</button><a target="_blank" rel="noopener noreferrer" href="https://trading-performance-risk-dashboard.pravaham3.chatgpt.site/">Open trading dashboard</a></div>
+   <label for="importPerformance">Or import a CSV/JSON export</label><input type="file" id="importPerformance" accept=".csv,.json,text/csv,application/json">
+   <p id="performanceInfo" class="small">Not connected. Direct sync requires a verified read-only export URL from the trading dashboard.</p>
+   <div id="performancePreview" class="small" style="overflow:auto;max-height:320px"></div>
+  </div>
+ </div>
+ <div class="panel" style="margin-top:15px">
+  <h2>3 · Family Wealth Dashboard · Road to 2034</h2>
+  <div class="small">Connect the actual family wealth dashboard for assets, India mutual funds, US stocks, SIPs, liabilities and progress toward ₹5 crore. A scenario calculator does not replace verified holdings.</div>
+  <div class="buttons"><button type="button" id="syncWealth" class="btn">Sync wealth export</button><a target="_blank" rel="noopener noreferrer" href="https://family-wealth-dashboard-public-pravaham3-5020s-projects.vercel.app/">Open Family Wealth Dashboard</a></div>
+  <label for="importWealth">Or import a CSV/JSON export from Family Wealth Dashboard</label><input type="file" id="importWealth" accept=".csv,.json,text/csv,application/json">
+  <p id="wealthInfo" class="small">Not connected. The Vercel deployment/export API is not yet accessible to JARVIS. Manual import works if a readable export is available.</p>
+  <div id="wealthPreview" class="small" style="overflow:auto;max-height:350px"></div>
+ </div>
+ <div class="panel" style="margin-top:15px">
+  <h2>Ask JARVIS about your synced data</h2>
+  <label><input id="includeIntegratedData" type="checkbox"> Include the currently loaded, read-only financial data summary in my next AI questions</label>
+  <p class="small">Off by default. When enabled, a limited data summary is sent to the selected AI provider (Gemini) along with your question. Do not import bank details or personal identifiers unnecessarily. No buy/sell orders are possible from this screen.</p>
+  <button type="button" id="askSynced" class="btn secondary">Ask JARVIS about connected data</button>
+ </div>
+</section>
+
 <section id="voice" class="tab"><div class="panel" style="margin-bottom:14px"><h2>JARVIS General Intelligence</h2><div id="cloudStatus" class="muted small">Checking hybrid AI connection and AXIOM Core…</div><div id="accessRow" class="hidden"><label for="accessCode">Private JARVIS access code (never enter an AI provider API key here)</label><div class="flex"><input id="accessCode" type="password" autocomplete="off" placeholder="Access code set in Render" style="max-width:320px"><button id="saveAccess" class="btn secondary" type="button">Unlock AI chat</button></div><div class="small">The access code is kept only in this browser tab's session. It is sent to this application's server, not stored in the source code.</div></div></div><div class="two jarvis-voice-grid"><div class="panel jarvis-voice-panel"><div class="jarvis-orb" id="jarvisOrb" data-state="idle" aria-label="JARVIS interactive voice visualizer">
     <header class="topbar">
       <div class="brand">
@@ -216,7 +257,7 @@ header .headerTalk{background:#153b51;border:1px solid #4baec6;color:#a7f5ff;pad
 <section id="notes" class="tab"><div class="two"><div class="panel"><h2>Research Notes</h2><label>New note</label><textarea id="noteInput" rows="5" placeholder="Add a thesis, pivot observation or follow-up idea"></textarea><div class="buttons"><button id="saveNote" class="btn">Save note</button><button id="clearNotes" class="btn secondary">Clear notes</button></div><div class="small">Notes are saved only in this browser on this device. Cloud synchronization is not enabled.</div></div><div class="panel"><h2>Saved Notes</h2><div id="notesList"></div><h2 style="margin-top:22px">Demo Watchlist</h2><div id="watchList"></div></div></div></section>
 <footer class="small" style="margin-top:35px;padding:15px 0;border-top:1px solid #284054">JARVIS AXIOM v6 · Seven integrated modules · Voice orb follows real speech states · No broker trading or live market feed</footer></main><button id="globalVoice" type="button" title="Open JARVIS voice assistant" aria-label="Open JARVIS voice assistant">🎙</button><script>
 const stocks=[['ALPH','Industrials','SEPA/VCP',124.5,127,2.2,92,true],['BRVO','Technology','Momentum',188.4,193,3.8,89,false],['CRST','Energy','SEPA/VCP',76.2,78,1.6,87,true],['DNEX','Healthcare','Momentum',95.3,99,2.9,86,false],['ECHO','Financials','SEPA/VCP',67.9,69,5.1,84,true],['FARO','Industrials','Momentum',156.8,160,1.9,83,false],['GLXY','Technology','SEPA/VCP',231.4,238,4.4,82,true],['HARB','Utilities','Momentum',88.6,91,1.3,81,false],['IONX','Materials','SEPA/VCP',112.1,116,1.8,79,true],['JOLT','Energy','Momentum',63.5,66,1.1,78,false],['KITE','Consumer','SEPA/VCP',54.9,57,2.4,76,true],['LUMA','Healthcare','Momentum',141.2,145,1.7,75,false]].map(x=>({ticker:x[0],sector:x[1],setup:x[2],price:x[3],pivot:x[4],vol:x[5],score:x[6],expand:x[7],distance:(x[4]-x[3])/x[4]*100}));
-const names={overview:'Command Overview',radar:'Pre-Breakout Radar',planner:'Trade Execution Planner',portfolio:'Portfolio KPIs',wealth:'Wealth Command 2034',voice:'JARVIS Voice Assistant',notes:'Research Console'};function showTab(t){document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.id===t));document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.tab===t));document.getElementById('pageTitle').textContent=names[t];}document.querySelectorAll('.nav').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+const names={overview:'Command Overview',radar:'Pre-Breakout Radar',planner:'Trade Execution Planner',portfolio:'Portfolio KPIs',wealth:'Wealth Command 2034',connections:'Data Connections',voice:'JARVIS Voice Assistant',notes:'Research Console'};function showTab(t){document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.id===t));document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.tab===t));document.getElementById('pageTitle').textContent=names[t];}document.querySelectorAll('.nav').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
 const bars=[44,53,48,59,62,56,67,61,73,68,74,71,80,77,84,72,78,82];document.getElementById('chart').innerHTML=bars.map(v=>`<span style="height:${v}%" title="Synthetic index ${v}"></span>`).join('');function statBars(id,arr){document.getElementById(id).innerHTML=arr.map(([k,v])=>`<div class="statline"><div class="row"><span>${k}</span><b>${v}%</b></div><div class="progress"><span style="width:${v}%"></span></div></div>`).join('')}statBars('sectors',[['Industrials',78],['Technology',70],['Energy',63],['Healthcare',55],['Financials',50]]);statBars('pillars',[['Index trend',65],['Breadth',54],['Leadership',63],['Distribution',46],['Volume',57],['Risk appetite',63]]);statBars('assetMix',[['India mutual funds',60],['US stocks',20],['Gold / Silver',5],['FD',5],['Real estate',10]]);
 let watch=readLocal('jarvis_watch',[]);function readLocal(key,fallback){try{return JSON.parse(localStorage.getItem(key)||'null')||fallback}catch(e){return fallback}}function writeLocal(key,value){try{localStorage.setItem(key,JSON.stringify(value))}catch(e){/*Private preview: keep current session state only*/}}const sectors=[...new Set(stocks.map(x=>x.sector))];document.getElementById('sectorFilter').innerHTML+=[...sectors].map(s=>`<option>${s}</option>`).join('');function radar(){let list=stocks.filter(x=>(!sectorFilter.value||x.sector===sectorFilter.value)&&(!setupFilter.value||x.setup===setupFilter.value)&&x.price>=50&&x.vol>=1);list.sort((a,b)=>sortFilter.value==='distance'?a.distance-b.distance:sortFilter.value==='volume'?b.vol-a.vol:b.score-a.score);stockRows.innerHTML=list.map(x=>`<tr><td><button class="btn secondary detail" data-t="${x.ticker}">${x.ticker}</button></td><td>${x.sector}</td><td>${x.setup}</td><td>$${x.price.toFixed(2)}</td><td>$${x.pivot.toFixed(2)}</td><td>${x.distance.toFixed(1)}%</td><td>${x.vol.toFixed(1)}M</td><td><b class="cyan">${x.score}</b></td><td>${x.expand?'✓':'—'}</td><td><button class="btn secondary watch" data-t="${x.ticker}">${watch.includes(x.ticker)?'★':'☆'}</button></td></tr>`).join('');document.querySelectorAll('.detail').forEach(b=>b.onclick=()=>detail(b.dataset.t));document.querySelectorAll('.watch').forEach(b=>b.onclick=()=>{let t=b.dataset.t;watch=watch.includes(t)?watch.filter(v=>v!==t):[...watch,t];writeLocal('jarvis_watch',watch);radar();renderWatch()})}function detail(t){let x=stocks.find(x=>x.ticker===t);stockDetail.innerHTML=`<b>${t} · SYNTHETIC DEMO</b><br>One pivot: $${x.pivot.toFixed(2)} · Distance below: ${x.distance.toFixed(2)}% · Liquidity ${x.vol}M avg shares/day · 2-day volume expansion: ${x.expand?'Yes':'No'}<br>AXIOM ${x.score}/100 · Component-level scoring requires verified chart data; the displayed total is synthetic and not a validated signal.<br>Risk example: entry $${x.price}, 7% stop $${(x.price*.93).toFixed(2)}. Earnings date and institutional sponsorship: unverified.`}['sectorFilter','setupFilter','sortFilter'].forEach(id=>document.getElementById(id).onchange=radar);radar();
 function calculate(){let eq=+equity.value,entryP=+entry.value,alloc=Math.min(25,Math.max(0,+allocation.value)),risk=+riskBudget.value/100,target=+targetPct.value/100;if(!(eq>0&&entryP>0&&risk>0)){planResults.innerHTML='Enter positive values.';return}let maxByAllocation=Math.floor(eq*alloc/100/entryP),maxByRisk=Math.floor(eq*risk/(entryP*.07)),qty=Math.max(0,Math.min(maxByAllocation,maxByRisk)),exposure=qty*entryP,loss=qty*entryP*.07,gain=qty*entryP*target;planResults.innerHTML=[['Shares',qty],['Capital used','$'+exposure.toFixed(2)],['7% stop','$'+(entryP*.93).toFixed(2)],['Risk at stop','$'+loss.toFixed(2)],['Target price','$'+(entryP*(1+target)).toFixed(2)],['Potential reward','$'+gain.toFixed(2)],['Reward / risk',(target/.07).toFixed(2)+'R'],['Account risk',(loss/eq*100).toFixed(2)+'%']].map(([k,v])=>`<div class="panel"><h3>${k}</h3><div class="value cyan">${v}</div></div>`).join('')}['equity','entry','allocation','targetPct','riskBudget'].forEach(id=>document.getElementById(id).oninput=calculate);calculate();
@@ -287,7 +328,7 @@ let a='';let source='';let citations=[];const mayNavigate=/\b(open|go to|switch 
 if(mayNavigate){a=answer(q);source='local command'}
 else if(location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1'){
  cloudPending=true;voiceStatus.textContent=cloudAvailable?'Thinking with cloud AI…':'Thinking with AXIOM Core…';
- try{const code=accessInput.value;const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json','X-JARVIS-Access-Code':code},body:JSON.stringify({message:q,history:cloudHistory}),cache:'no-store'});
+ try{const code=accessInput.value;const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json','X-JARVIS-Access-Code':code},body:JSON.stringify({message:q,history:cloudHistory,dataContext:typeof window.jarvisIntegrationContext==='function'?window.jarvisIntegrationContext():''}),cache:'no-store'});
  const data=await r.json();if(!r.ok)throw Error(data.error||('Brain request failed: '+r.status));a=String(data.reply||'No answer received');source=data.source==='openai'?'OpenAI GPT':(data.source||'AXIOM Core');citations=Array.isArray(data.sources)?data.sources:[];
  cloudHistory.push({role:'user',text:q},{role:'model',text:a});cloudHistory=cloudHistory.slice(-12);
  if(document.getElementById('cloudConnection'))document.getElementById('cloudConnection').textContent=source==='OpenAI GPT'?'OpenAI GPT connected':source==='gemini'?'Gemini connected':'AXIOM Core online';
@@ -400,4 +441,97 @@ function jarvisSetOrb(next,message,detail){
  requestAnimationFrame(render);
  jarvisSetOrb('idle','JARVIS standing by','SYSTEM READY · AUDIO REACTOR ONLINE');
 })();
-</script></body></html>
+</script>
+<script>
+(function(){
+ 'use strict';
+ const loaded={scanner:null,performance:null,wealth:null};
+ const kinds=['scanner','performance','wealth'];
+ const field=()=>document.getElementById('accessCode').value.trim();
+ function escapeText(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+ function csvObjects(s){
+  const rows=[],current=[];let cell='',quoted=false;
+  for(let i=0;i<s.length;i++){
+   const c=s[i];
+   if(c==='"'){if(quoted&&s[i+1]==='"'){cell+='"';i++}else quoted=!quoted}
+   else if(c===','&&!quoted){current.push(cell);cell=''}
+   else if((c==='\r'||c==='\n')&&!quoted){if(c==='\r'&&s[i+1]==='\n')i++;current.push(cell);cell='';if(current.some(x=>x.trim()))rows.push([...current]);current.length=0}
+   else cell+=c;
+   if(rows.length>1000)break;
+  }
+  if(cell||current.length){current.push(cell);if(current.some(x=>x.trim()))rows.push([...current])}
+  const head=(rows.shift()||[]).map(h=>h.trim().replace(/^\uFEFF/,''));
+  return rows.map(row=>Object.fromEntries(head.map((h,i)=>[h,row[i]||''])));
+ }
+ function summarize(kind,obj,label){
+  loaded[kind]={obj,label,importedAt:new Date().toISOString()};
+  const data=obj&&typeof obj==='object'&&Object.hasOwn(obj,'data')?obj.data:obj;
+  const records=Array.isArray(data)?data:(Array.isArray(obj.records)?obj.records:null);
+  const date=obj?.asOf||obj?.updatedAt||obj?.lastUpdated||records?.[0]?.AsOf||records?.[0]?.asOf||'Not supplied by source';
+  const count=records?records.length:null;
+  const countInfo=count===null?'Structured snapshot':count+' record(s)';
+  document.getElementById(kind+'Info').textContent=label+' · '+countInfo+' · As of: '+date+' · Source not independently verified for intraday freshness';
+  let html='';
+  if(records){
+   const cells=kind==='scanner'?['Ticker','Status','Score','Close','Pivot','DistancePct','AsOf']:Object.keys(records[0]||{}).slice(0,7);
+   html='<table style="width:100%;border-collapse:collapse"><thead><tr>'+cells.map(x=>'<th>'+escapeText(x)+'</th>').join('')+'</tr></thead><tbody>';
+   html+=records.slice(0,15).map(row=>'<tr>'+cells.map(x=>'<td>'+escapeText(row[x])+'</td>').join('')+'</tr>').join('');
+   html+='</tbody></table>';
+  }else{
+   html='<pre style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:290px;overflow:auto">'+escapeText(JSON.stringify(data,null,2).slice(0,5500))+'</pre>';
+  }
+  document.getElementById(kind+'Preview').innerHTML=html;
+ }
+ async function sync(kind){
+  const info=document.getElementById(kind+'Info');
+  if(!field()){info.textContent='Enter your private JARVIS access code in Voice Assistant first.';return}
+  info.textContent='Reading '+kind+' source...';
+  try{
+   const res=await fetch('/api/integrations/'+kind,{headers:{'X-JARVIS-Access-Code':field()},cache:'no-store'});
+   const d=await res.json();
+   if(!res.ok)throw Error(d.error||('HTTP '+res.status));
+   summarize(kind,d,d.source||'Read-only source');
+  }catch(e){info.textContent='Not synced: '+String(e.message)}
+ }
+ async function refreshStatus(){
+  const el=document.getElementById('connectionStatus');
+  if(!field()){el.textContent='Enter JARVIS access code in Voice Assistant first.';return}
+  try{
+   const r=await fetch('/api/integrations/status',{cache:'no-store',headers:{'X-JARVIS-Access-Code':field()}});
+   const d=await r.json();if(!r.ok)throw Error(d.error||'Connection check failed');
+   el.textContent='Scanner '+(d.scanner?.available?'configured':'needs GitHub token')+' · Trading KPIs '+(d.performance?.available?'configured':'needs export URL')+' · Wealth '+(d.wealth?.available?'configured':'needs export URL');
+  }catch(e){el.textContent=String(e.message)}
+ }
+ for(const kind of kinds){
+  const name=kind.charAt(0).toUpperCase()+kind.slice(1);
+  document.getElementById('sync'+name).addEventListener('click',()=>sync(kind));
+  document.getElementById('import'+name).addEventListener('change',async function(){
+   const file=this.files?.[0];if(!file)return;
+   const info=document.getElementById(kind+'Info');
+   if(file.size>250000){info.textContent='File too large: maximum 250 KB';return}
+   try{
+    const body=await file.text();
+    let data;if(file.name.toLowerCase().endsWith('.json'))data=JSON.parse(body);else data=csvObjects(body);
+    summarize(kind,data,'Manual import: '+file.name+' (this tab only)');
+   }catch(e){info.textContent='Could not parse import: '+String(e.message)}
+  });
+ }
+ document.getElementById('checkSources').addEventListener('click',refreshStatus);
+ document.getElementById('askSynced').addEventListener('click',()=>{showTab('voice');document.getElementById('chatInput').value='Summarize my connected AXIOM and family wealth data with source dates, gaps, and next steps.';document.getElementById('chatInput').focus()});
+ window.jarvisIntegrationContext=function(){
+  if(!document.getElementById('includeIntegratedData').checked)return '';
+  const context={note:'Source-provided, read-only snapshots; no real-time guarantee; do not execute trades.'};
+  for(const kind of kinds){
+   const value=loaded[kind];if(!value)continue;
+   const obj=value.obj,data=Object.hasOwn(obj||{},'data')?obj.data:obj;
+   const records=Array.isArray(data)?data:obj?.records;
+   if(records){
+    const subset=kind==='scanner'?records.slice(0,12).map(row=>({Ticker:row.Ticker,Status:row.Status,Score:row.Score,Close:row.Close,Pivot:row.Pivot,DistancePct:row.DistancePct,AsOf:row.AsOf})):records.slice(0,8);
+    context[kind]={source:value.label,asOf:obj?.asOf||records[0]?.AsOf||'unknown',records:subset,count:records.length};
+   }else{context[kind]={source:value.label,summary:data}}
+  }
+  return JSON.stringify(context).slice(0,4500);
+ };
+})();
+</script>
+</body></html>
