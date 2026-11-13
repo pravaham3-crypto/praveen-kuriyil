@@ -21,6 +21,10 @@ const FREE_NEWS_ENABLED = process.env.JARVIS_NEWS_FEED_ENABLED === 'true';
 const TAVILY_API_KEY = process.env.TAVILY_API_KEY || '';
 // General search has a hard off-switch; if no key is set only approved public retailer reads may work.
 const CHATGPT_PLUS_COMMAND_HUB = process.env.JARVIS_PRIMARY_BRAIN === 'chatgpt-plus-handoff';
+const VOICE_ENABLED=process.env.JARVIS_VOICE_ENABLED==='true';
+const VOICE_SEARCH_ENABLED=process.env.JARVIS_VOICE_WEB_SEARCH==='true';
+const VOICE_MODEL='gpt-realtime-2.1-mini';
+const voiceSessions=new Map(),voiceSearches=new Map();
 // API provider secrets remain on the server, never in HTML or source control.
 // Respect an explicit provider choice. In Gemini/free mode, NEVER silently call OpenAI.
 const provider = (AI_PROVIDER === 'chatgpt-plus' || AI_PROVIDER === 'disabled' || AI_PROVIDER === 'none') ? 'core'
@@ -286,6 +290,62 @@ async function chat(req,res){
  }catch(e){console.error('JARVIS chat error:',e.name);return json(res,e.name==='AbortError'?504:400,{error:e.name==='AbortError'?'Cloud AI request timed out.':'Unable to process the request.'});}
 }
 
+
+function trialBudget(map,req,max){
+ const day=new Date().toISOString().slice(0,10), key=crypto.createHash('sha256').update(userIP(req)).digest('hex').slice(0,18)+day;
+ if(map.size>1000)map.clear();
+ const n=map.get(key)||0;if(n>=max)return false;map.set(key,n+1);return true;
+}
+function voiceAuthorized(req,res){
+ if(!VOICE_ENABLED||!OPENAI_API_KEY)return (json(res,503,{error:'Voice trial is not activated. Configure OPENAI_API_KEY and JARVIS_VOICE_ENABLED in Render after adding API credits.'}),false);
+ if(!ACCESS_CODE||!secureCompare(req.headers['x-jarvis-access-code'],ACCESS_CODE))return (json(res,401,{error:'Enter your JARVIS access code in the voice panel.'}),false);
+ if(!limit(req))return (json(res,429,{error:'Too many requests.'}),false);
+ return true;
+}
+const voicePrompt='You are JARVIS, an intelligent natural-speaking assistant. Keep answers relevant to the actual question, typically 2-5 sentences. Never invent current prices, store listings, stock quotes or private portfolio values. For current product prices and news call search_web if enabled. When no search is available, explain that the price cannot be verified. The user is in Qatar. For AXIOM: preserve NYSE/Nasdaq stock price >=$50, average volume >=1M shares, SEPA/VCP and momentum, one exact manually charted pivot, Market Strength >=50 gate, 7% stop, 12% weak-market pilot scaling conditionally to 25%. Never place trades or modify scanners. Today is '+new Date().toISOString().slice(0,10)+'.';
+function voiceSessionConfig(){
+ const tools=VOICE_SEARCH_ENABLED?[{type:'function',name:'search_web',description:'Search up-to-date public websites for products, retail prices, availability, news or other current facts. Use only when current external information is necessary.',parameters:{type:'object',properties:{query:{type:'string',description:'Search query with retailer, product, location and currency if relevant.'}},required:['query'],additionalProperties:false}}]:[];
+ return {type:'realtime',model:VOICE_MODEL,instructions:voicePrompt+(VOICE_SEARCH_ENABLED?' Web search is available through search_web; use it when asked for current information.':' Web search is unavailable in this session.'),audio:{output:{voice:'marin'},input:{turn_detection:{type:'server_vad',silence_duration_ms:750,create_response:true,interrupt_response:true}}},tools,tool_choice:VOICE_SEARCH_ENABLED?'auto':'none'};
+}
+async function realtimeConnect(req,res){
+ if(!voiceAuthorized(req,res))return;
+ if(!String(req.headers['content-type']||'').startsWith('application/sdp'))return json(res,415,{error:'SDP WebRTC offer required.'});
+ if(!trialBudget(voiceSessions,req,4))return json(res,429,{error:'Voice trial reached four sessions today. Try again tomorrow.'});
+ let offer;try{offer=await readBody(req,60000)}catch(e){return json(res,413,{error:'Voice offer too large.'})}
+ if(!offer.startsWith('v=0')||!offer.includes('m=audio'))return json(res,400,{error:'Invalid WebRTC audio offer.'});
+ const fd=new FormData();fd.set('sdp',offer);fd.set('session',JSON.stringify(voiceSessionConfig()));
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),20000);
+ try{
+  const safeId=crypto.createHash('sha256').update('jarvis-realtime-'+String(req.headers['x-jarvis-access-code'])).digest('hex');
+  const response=await fetch('https://api.openai.com/v1/realtime/calls',{method:'POST',signal:controller.signal,headers:{Authorization:'Bearer '+OPENAI_API_KEY,'OpenAI-Safety-Identifier':safeId},body:fd});
+  const txt=await response.text();
+  if(!response.ok){console.warn('Voice provider HTTP',response.status);return json(res,502,{error:response.status===429?'API credits or rate limit exhausted. Check billing and model access.':'OpenAI Realtime returned HTTP '+response.status+'. Check API key permissions.'})}
+  res.writeHead(200,{'Content-Type':'application/sdp','Content-Length':Buffer.byteLength(txt),'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(txt);
+ }catch(e){console.warn('Voice handshake failed:',e.name);return json(res,504,{error:'Realtime connection unavailable. Check API billing and retry.'})}finally{clearTimeout(timer)}
+}
+function webOutput(result){
+ const answer=(result.output||[]).filter(x=>x.type==='message').flatMap(x=>x.content||[]).filter(x=>x.type==='output_text').map(x=>x.text||'').join('\n').trim()||result.output_text||'No verified result';
+ const map=new Map();
+ for(const item of result.output||[])for(const part of item.content||[])for(const a of part.annotations||[])if(a.type==='url_citation'&&/^https:\/\//.test(a.url||''))map.set(a.url,{title:String(a.title||a.url).slice(0,120),url:a.url});
+ return {answer:answer.slice(0,1800),sources:[...map.values()].slice(0,5),fetchedAt:new Date().toISOString()};
+}
+async function realtimeSearch(req,res){
+ if(!voiceAuthorized(req,res))return;
+ if(!VOICE_SEARCH_ENABLED)return json(res,403,{error:'Web search is disabled for this trial.'});
+ let params;try{params=JSON.parse(await readBody(req,2500))}catch(e){return json(res,400,{error:'Invalid tool parameters.'})}
+ if(params.name!=='search_web'||typeof params.query!=='string'||params.query.trim().length<3||params.query.length>220)return json(res,400,{error:'Invalid public-search request.'});
+ if(!trialBudget(voiceSearches,req,6))return json(res,429,{error:'Web-search trial limit reached (six today).'});
+ const query=params.query.trim();
+ if(/\b(password|access code|secret|api key|account number)\b/i.test(query))return json(res,400,{error:'Private information cannot be searched on the public web.'});
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),23000);
+ try{
+  const r=await fetch('https://api.openai.com/v1/responses',{method:'POST',signal:controller.signal,headers:{Authorization:'Bearer '+OPENAI_API_KEY,'Content-Type':'application/json'},body:JSON.stringify({model:'gpt-4.1-mini',store:false,max_output_tokens:400,tools:[{type:'web_search',search_context_size:'medium'}],input:'Search public sites and answer this specific current question with verifiable details, citations and exact price/currency if available; explicitly state what is not verified: '+query})});
+  const obj=await r.json().catch(()=>({}));
+  if(!r.ok){console.warn('Voice search HTTP',r.status);return json(res,502,{error:'Search provider unavailable, HTTP '+r.status})}
+  return json(res,200,webOutput(obj));
+ }catch(e){return json(res,504,{error:'Web search timed out; do not invent current prices.'})}finally{clearTimeout(timer)}
+}
+
 const AXIOM_SCANNER_URL='https://api.github.com/repos/pravaham3-crypto/ai-long-short-scanner/contents/snapshots/prebreakout_long.csv';
 function authorizedIntegration(req,res){
  if(!ACCESS_CODE){json(res,503,{error:'Configure JARVIS_ACCESS_CODE in Render before connecting financial sources.'});return false;}
@@ -354,8 +414,10 @@ const server=http.createServer((req,res)=>{
  try{
    const url=new URL(req.url||'/', 'http://localhost');
    if(req.method==='GET'&&url.pathname==='/healthz')return json(res,200,{ok:true,brain:'axiom-core',version:'6.0'});
-   if(req.method==='GET'&&url.pathname==='/api/status')return json(res,200,{brainAvailable:true,brainMode:aiAvailable?'llm':'rules',aiAvailable,provider:aiAvailable?provider:'axiom-core',preferredProvider:AI_PROVIDER==='chatgpt-plus'?'chatgpt-plus':AI_PROVIDER==='gemini'?'gemini':'openai',model:aiAvailable?(provider==='openai'?OPENAI_MODEL:GEMINI_MODEL):null,webSearchEnabled:aiAvailable&&provider==='openai'&&OPENAI_WEB_SEARCH,publicSearchConfigured:Boolean(TAVILY_API_KEY),retailerDirectCheck:true,freeRecentNewsEnabled:FREE_NEWS_ENABLED,freeRecentNewsType:'public-RSS-headlines',reason:AI_PROVIDER==='chatgpt-plus'?'Use ChatGPT Plus in ChatGPT. This external dashboard cannot make AI requests using your subscription.':aiAvailable?'':AI_PROVIDER==='gemini'?(GEMINI_API_KEY&&!ACCESS_CODE?'Add JARVIS_ACCESS_CODE in Render to enable Gemini.':'Add GEMINI_API_KEY (from Google AI Studio free tier) and JARVIS_ACCESS_CODE in Render. AXIOM Core is online.'):(OPENAI_API_KEY&&!ACCESS_CODE?'Add JARVIS_ACCESS_CODE in Render to enable private AI.':'Add OPENAI_API_KEY and JARVIS_ACCESS_CODE in Render. AXIOM Core is online.'),commandCenter:CHATGPT_PLUS_COMMAND_HUB?'ChatGPT Plus (opens externally)':'JARVIS',subscriptionApiRouting:false,marketDataConnected:false,brokerConnected:false,version:'6.0'});
+   if(req.method==='GET'&&url.pathname==='/api/status')return json(res,200,{brainAvailable:true,brainMode:aiAvailable?'llm':'rules',aiAvailable,provider:aiAvailable?provider:'axiom-core',preferredProvider:AI_PROVIDER==='chatgpt-plus'?'chatgpt-plus':AI_PROVIDER==='gemini'?'gemini':'openai',model:aiAvailable?(provider==='openai'?OPENAI_MODEL:GEMINI_MODEL):null,webSearchEnabled:aiAvailable&&provider==='openai'&&OPENAI_WEB_SEARCH,publicSearchConfigured:Boolean(TAVILY_API_KEY),retailerDirectCheck:true,freeRecentNewsEnabled:FREE_NEWS_ENABLED,freeRecentNewsType:'public-RSS-headlines',reason:AI_PROVIDER==='chatgpt-plus'?'Use ChatGPT Plus in ChatGPT. This external dashboard cannot make AI requests using your subscription.':aiAvailable?'':AI_PROVIDER==='gemini'?(GEMINI_API_KEY&&!ACCESS_CODE?'Add JARVIS_ACCESS_CODE in Render to enable Gemini.':'Add GEMINI_API_KEY (from Google AI Studio free tier) and JARVIS_ACCESS_CODE in Render. AXIOM Core is online.'):(OPENAI_API_KEY&&!ACCESS_CODE?'Add JARVIS_ACCESS_CODE in Render to enable private AI.':'Add OPENAI_API_KEY and JARVIS_ACCESS_CODE in Render. AXIOM Core is online.'),commandCenter:CHATGPT_PLUS_COMMAND_HUB?'ChatGPT Plus (opens externally)':'JARVIS',subscriptionApiRouting:false,voiceReady:VOICE_ENABLED&&Boolean(OPENAI_API_KEY)&&Boolean(ACCESS_CODE),voiceModel:VOICE_MODEL,voiceSearchEnabled:VOICE_SEARCH_ENABLED,voiceMaxSeconds:120,marketDataConnected:false,brokerConnected:false,version:'6.0'});
    if(req.method==='POST'&&url.pathname==='/api/chat')return void chat(req,res);
+   if(req.method==='POST'&&url.pathname==='/api/voice/connect')return void realtimeConnect(req,res);
+   if(req.method==='POST'&&url.pathname==='/api/voice/search')return void realtimeSearch(req,res);
    if(req.method==='GET'&&url.pathname==='/api/research/news')return void newsRoute(req,res,url.searchParams.get('q')||'global financial markets');
    if(req.method==='GET'&&url.pathname==='/api/integrations/status')return void integrationRoute(req,res,'status');
    if(req.method==='GET'&&url.pathname==='/api/integrations/scanner')return void integrationRoute(req,res,'scanner');
