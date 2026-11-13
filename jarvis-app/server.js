@@ -13,9 +13,10 @@ const OPENAI_WEB_SEARCH = String(process.env.OPENAI_WEB_SEARCH || 'false').toLow
 const ACCESS_CODE = process.env.JARVIS_ACCESS_CODE || '';
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 // API provider secrets remain on the server, never in HTML or source control.
-// OpenAI is preferred; explicit Gemini is supported for backwards compatibility.
-const provider = (AI_PROVIDER === 'gemini' && GEMINI_API_KEY) ? 'gemini'
-  : (OPENAI_API_KEY ? 'openai' : ((AI_PROVIDER === 'auto' && GEMINI_API_KEY) ? 'gemini' : 'core'));
+// Respect an explicit provider choice. In Gemini/free mode, NEVER silently call OpenAI.
+const provider = AI_PROVIDER === 'gemini' ? (GEMINI_API_KEY ? 'gemini' : 'core')
+  : AI_PROVIDER === 'openai' ? (OPENAI_API_KEY ? 'openai' : 'core')
+  : (GEMINI_API_KEY ? 'gemini' : (OPENAI_API_KEY ? 'openai' : 'core'));
 const aiAvailable = Boolean(provider !== 'core' && ACCESS_CODE);
 const rate = new Map();
 const mime = {'.html':'text/html; charset=utf-8','.json':'application/json; charset=utf-8','.svg':'image/svg+xml','.ico':'image/x-icon'};
@@ -103,7 +104,7 @@ const server=http.createServer((req,res)=>{
  try{
    const url=new URL(req.url||'/', 'http://localhost');
    if(req.method==='GET'&&url.pathname==='/healthz')return json(res,200,{ok:true,brain:'axiom-core',version:'6.0'});
-   if(req.method==='GET'&&url.pathname==='/api/status')return json(res,200,{brainAvailable:true,brainMode:aiAvailable?'llm':'rules',aiAvailable,provider:aiAvailable?provider:'axiom-core',preferredProvider:AI_PROVIDER==='gemini'?'gemini':'openai',model:aiAvailable?(provider==='openai'?OPENAI_MODEL:GEMINI_MODEL):null,webSearchEnabled:aiAvailable&&provider==='openai'&&OPENAI_WEB_SEARCH,reason:aiAvailable?'':!ACCESS_CODE&&(OPENAI_API_KEY||GEMINI_API_KEY)?'Add JARVIS_ACCESS_CODE in Render to enable the private AI brain.':AI_PROVIDER==='gemini'?'Add GEMINI_API_KEY and JARVIS_ACCESS_CODE in Render.':'Add OPENAI_API_KEY and JARVIS_ACCESS_CODE in Render to activate general-purpose GPT intelligence. AXIOM Core is online.',marketDataConnected:false,brokerConnected:false,version:'6.0'});
+   if(req.method==='GET'&&url.pathname==='/api/status')return json(res,200,{brainAvailable:true,brainMode:aiAvailable?'llm':'rules',aiAvailable,provider:aiAvailable?provider:'axiom-core',preferredProvider:AI_PROVIDER==='gemini'?'gemini':'openai',model:aiAvailable?(provider==='openai'?OPENAI_MODEL:GEMINI_MODEL):null,webSearchEnabled:aiAvailable&&provider==='openai'&&OPENAI_WEB_SEARCH,reason:aiAvailable?'':AI_PROVIDER==='gemini'?(GEMINI_API_KEY&&!ACCESS_CODE?'Add JARVIS_ACCESS_CODE in Render to enable Gemini.':'Add GEMINI_API_KEY (from Google AI Studio free tier) and JARVIS_ACCESS_CODE in Render. AXIOM Core is online.'):(OPENAI_API_KEY&&!ACCESS_CODE?'Add JARVIS_ACCESS_CODE in Render to enable private AI.':'Add OPENAI_API_KEY and JARVIS_ACCESS_CODE in Render. AXIOM Core is online.'),marketDataConnected:false,brokerConnected:false,version:'6.0'});
    if(req.method==='POST'&&url.pathname==='/api/chat')return void chat(req,res);
    if(req.method!=='GET'&&req.method!=='HEAD')return json(res,405,{error:'Method not allowed'});
    const files={'/':'index.html','/index.html':'index.html','/manifest.json':'manifest.json','/icon.svg':'icon.svg'};
