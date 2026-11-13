@@ -1,3 +1,29 @@
+# JARVIS AXIOM — paid Realtime voice trial
+
+JARVIS's cloud-hosted **Live Voice** panel now supports a real, bidirectional conversation in its own animated orb via OpenAI Realtime WebRTC (model `gpt-realtime-2.1-mini`, voice `marin`). This runs on **separately billed OpenAI API credits**, not the ChatGPT Plus subscription.
+
+## First-time setup (small prepaid test)
+
+1. Add the smallest amount of prepaid OpenAI API credit you are comfortable with at https://platform.openai.com/settings/organization/billing/overview. Configure a dedicated project, set a low project budget/alerts, and turn **auto-recharge OFF** to reduce the chance of additional purchases.
+2. Generate a *project-scoped* API key at https://platform.openai.com/api-keys. In the JARVIS Render service Environment, update `OPENAI_API_KEY` securely, without pasting it into ChatGPT, HTML, code, or GitHub.
+3. Set `JARVIS_VOICE_ENABLED=true`, `JARVIS_VOICE_WEB_SEARCH=true`. The existing `JARVIS_ACCESS_CODE` is required to start a session or use the search tool. **The separate `AI_PROVIDER` value does not control Realtime voice.**
+4. Visit https://jarvis-axiom-voice-pravaham3.onrender.com, refresh, enter the private JARVIS access code, and tap **Start 2-minute conversation** (or the orb). Allow microphone access; keep the page open. Tap **End conversation** to disconnect.
+5. Ask a general test question, followed by a current-price example such as 'Check Nike running shoes at Sports Corner Qatar and quote current prices with sources.' The assistant should use its `search_web` tool and show source links if any are found; it must not invent current prices.
+
+## Trial safety measures
+
+- Browser stops Realtime WebRTC after 120 seconds; maximum 4 new sessions per IP address per UTC day, kept in ephemeral server memory.
+- Up to 6 web searches per IP per UTC day. Searches call the Responses API with `gpt-4.1-mini` and OpenAI `web_search` tool, which adds API charges.
+- Sessions are created only on an authenticated, deliberate browser click. The long-lived API key stays in Render.
+- **Not a hard spending cap:** counters reset if the Render service restarts; closing the browser or losing the network can complicate immediate hangup; other applications sharing the same project key can incur charges. Use OpenAI's billing dashboard and project budget settings for spending oversight.
+- The voice page needs the foreground microphone on iOS; it cannot continue listening indefinitely when the phone locks or the browser is suspended.
+- No IBKR order placement, AXIOM rule changes, scheduling changes, or financial record edits occur here. Trading/wealth connections remain read-only unless explicitly changed later.
+
+## Pricing and usage
+
+Current published price for `gpt-realtime-2.1-mini` is $10 per million audio input tokens and $20 per million audio output tokens. Public web search is priced per call plus input tokens; actual cost depends on conversation length, audio turns, and tool usage. Consult https://developers.openai.com/api/docs/pricing before funding. A $5 prepaid test is a *trial amount*, not a monthly subscription or unlimited allowance.
+
+---
 # JARVIS AXIOM — Hybrid AI and Read-Only Data Connections
 
 JARVIS is a standalone Render-hosted voice dashboard. It uses **Gemini** when configured, supports optional billed OpenAI, and falls back to the local AXIOM rules engine. Your original scanner, trading dashboard, and finance apps remain separate and unchanged.
