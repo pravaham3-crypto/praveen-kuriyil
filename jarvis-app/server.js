@@ -296,6 +296,10 @@ function trialBudget(map,req,max){
  if(map.size>1000)map.clear();
  const n=map.get(key)||0;if(n>=max)return false;map.set(key,n+1);return true;
 }
+function refundTrial(map,req){
+ const day=new Date().toISOString().slice(0,10),key=crypto.createHash('sha256').update(userIP(req)).digest('hex').slice(0,18)+day;
+ const n=map.get(key)||0;if(n>0)map.set(key,n-1);
+}
 function voiceAuthorized(req,res){
  if(!VOICE_ENABLED||!OPENAI_API_KEY)return (json(res,503,{error:'Voice trial is not activated. Configure OPENAI_API_KEY and JARVIS_VOICE_ENABLED in Render after adding API credits.'}),false);
  if(!ACCESS_CODE||!secureCompare(req.headers['x-jarvis-access-code'],ACCESS_CODE))return (json(res,401,{error:'Enter your JARVIS access code in the voice panel.'}),false);
@@ -310,18 +314,18 @@ function voiceSessionConfig(){
 async function realtimeConnect(req,res){
  if(!voiceAuthorized(req,res))return;
  if(!String(req.headers['content-type']||'').startsWith('application/sdp'))return json(res,415,{error:'SDP WebRTC offer required.'});
- if(!trialBudget(voiceSessions,req,4))return json(res,429,{error:'Voice trial reached four sessions today. Try again tomorrow.'});
  let offer;try{offer=await readBody(req,60000)}catch(e){return json(res,413,{error:'Voice offer too large.'})}
  if(!offer.startsWith('v=0')||!offer.includes('m=audio'))return json(res,400,{error:'Invalid WebRTC audio offer.'});
+ if(!trialBudget(voiceSessions,req,4))return json(res,429,{error:'Voice trial reached four successful sessions today. Try again tomorrow.'});
  const fd=new FormData();fd.set('sdp',offer);fd.set('session',JSON.stringify(voiceSessionConfig()));
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),20000);
  try{
   const safeId=crypto.createHash('sha256').update('jarvis-realtime-'+String(req.headers['x-jarvis-access-code'])).digest('hex');
   const response=await fetch('https://api.openai.com/v1/realtime/calls',{method:'POST',signal:controller.signal,headers:{Authorization:'Bearer '+OPENAI_API_KEY,'OpenAI-Safety-Identifier':safeId},body:fd});
   const txt=await response.text();
-  if(!response.ok){console.warn('Voice provider HTTP',response.status);return json(res,502,{error:response.status===429?'API credits or rate limit exhausted. Check billing and model access.':'OpenAI Realtime returned HTTP '+response.status+'. Check API key permissions.'})}
+  if(!response.ok){refundTrial(voiceSessions,req);console.warn('Voice provider HTTP',response.status);return json(res,502,{error:response.status===429?'API credits or rate limit exhausted. Check billing and model access.':'OpenAI Realtime returned HTTP '+response.status+'. Check API key permissions.'})}
   res.writeHead(200,{'Content-Type':'application/sdp','Content-Length':Buffer.byteLength(txt),'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(txt);
- }catch(e){console.warn('Voice handshake failed:',e.name);return json(res,504,{error:'Realtime connection unavailable. Check API billing and retry.'})}finally{clearTimeout(timer)}
+ }catch(e){refundTrial(voiceSessions,req);console.warn('Voice handshake failed:',e.name);return json(res,504,{error:'Realtime connection unavailable. Check API billing and retry.'})}finally{clearTimeout(timer)}
 }
 function webOutput(result){
  const answer=(result.output||[]).filter(x=>x.type==='message').flatMap(x=>x.content||[]).filter(x=>x.type==='output_text').map(x=>x.text||'').join('\n').trim()||result.output_text||'No verified result';
