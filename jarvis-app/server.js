@@ -86,17 +86,40 @@ function rssTag(block,name){
  const match=block.match(new RegExp('<'+name+'(?:\\s[^>]*)?>([\\s\\S]*?)<\\/'+name+'>','i'));
  return match?decodeRssText(match[1]):'';
 }
-function parseNewsRss(xml){
+
+function parseNewsRss(xml,maxItems=35){
  const result=[];const matchItems=xml.match(/<item\b[^>]*>[\s\S]*?<\/item>/gi)||[];
- for(const item of matchItems.slice(0,12)){
+ const allowedHost=new Set(['news.google.com','www.bing.com','www.bbc.com','www.bbc.co.uk','bbc.co.uk','bbc.com']);
+ for(const item of matchItems.slice(0,maxItems)){
   const title=rssTag(item,'title'),link=rssTag(item,'link'),pubDate=rssTag(item,'pubDate'),publisher=rssTag(item,'source');
   let safeLink;
-  try{const url=new URL(link);if(url.protocol!=='https:'||url.hostname!=='news.google.com')continue;safeLink=url.toString()}catch(e){continue}
-  const parsed=new Date(pubDate);
-  if(title&&Number.isFinite(parsed.getTime()))result.push({title:title.slice(0,220),url:safeLink,publishedAt:parsed.toISOString(),publisher:publisher.slice(0,90)||'Unspecified publisher'});
-  if(result.length>=8)break;
+  try{const url=new URL(link);if(url.protocol!=='https:'||!allowedHost.has(url.hostname))continue;safeLink=url.toString()}catch(e){continue}
+  const published=new Date(pubDate);
+  if(title&&Number.isFinite(published.getTime())&&published.getTime()<=Date.now()+3600000&&published.getTime()>=Date.now()-8*86400000){
+   result.push({title:title.slice(0,220),url:safeLink,publishedAt:published.toISOString(),publisher:publisher.slice(0,90)||(safeLink.includes('bbc.')?'BBC News':'Publisher not specified')});
+  }
+  if(result.length>=28)break;
  }
  return result;
+}
+async function fetchRssAt(url,expectedHost){
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),8000);
+ try{
+  const u=new URL(url);
+  if(u.protocol!=='https:'||u.hostname!==expectedHost)throw Error('Unsupported RSS destination');
+  const r=await fetch(url,{signal:controller.signal,redirect:'error',headers:{'Accept':'application/rss+xml, application/xml, text/xml','User-Agent':'Mozilla/5.0 (compatible; JARVIS-Research/1.0)'}});
+  if(!r.ok)throw Error('HTTP '+r.status);
+  const xml=await r.text();
+  if(xml.length>350000||!xml.includes('<rss'))throw Error('Invalid RSS response');
+  return parseNewsRss(xml);
+ }finally{clearTimeout(timer)}
+}
+function relevanceScore(article,query){
+ const stop=new Set(['latest','today','recent','now','news','breaking','this','what','about','stock','stocks','markets','market','and','the','with','current','update','updates','has','any','for','from','how','are','was','report','2026']);
+ const tokens=query.toLowerCase().match(/[a-z0-9]{3,}/g)?.filter(x=>!stop.has(x)).slice(0,12)||[];
+ if(!tokens.length)return 1;
+ const title=article.title.toLowerCase();
+ return tokens.reduce((score,word)=>score+(title.includes(word)?1:0),0);
 }
 async function fetchRecentHeadlines(query){
  if(!FREE_NEWS_ENABLED)throw Object.assign(Error('Public news retrieval is currently disabled.'),{status:503});
@@ -104,21 +127,30 @@ async function fetchRecentHeadlines(query){
  if(clean.length<3)throw Object.assign(Error('Enter a news topic with at least 3 characters.'),{status:400});
  const key=clean.toLowerCase(),cached=headlineCache.get(key);
  if(cached&&Date.now()-cached.cachedAt<5*60*1000)return cached.data;
- const params=new URLSearchParams({q:clean+' when:7d',hl:'en-US',gl:'US',ceid:'US:en'});
- const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),9000);
- try{
-  const url='https://'+NEWS_FEED_HOST+'/rss/search?'+params.toString();
-  const response=await fetch(url,{headers:{'Accept':'application/rss+xml, application/xml, text/xml','User-Agent':'Mozilla/5.0 (compatible; JARVIS-Research/1.0)'},signal:controller.signal});
-  if(!response.ok)throw Object.assign(Error('News RSS source returned HTTP '+response.status),{status:502});
-  const xml=await response.text();
-  if(xml.length>350000||!xml.includes('<rss'))throw Object.assign(Error('News source response was not valid RSS.'),{status:502});
-  const articles=parseNewsRss(xml);
-  if(!articles.length)throw Object.assign(Error('No dated news headlines were returned by the public feed. This is not a live web search.'),{status:404});
-  const data={source:'Google News public RSS',method:'dated headline retrieval',query:clean,fetchedAt:new Date().toISOString(),articles,disclaimer:'Headlines only; titles and links are not independently verified, and no full articles, exchange quotes or market data feeds are accessed.'};
-  headlineCache.set(key,{cachedAt:Date.now(),data});
-  if(headlineCache.size>50){for(const [k,v] of headlineCache){if(Date.now()-v.cachedAt>5*60*1000)headlineCache.delete(k)}}
-  return data;
- }finally{clearTimeout(timeout)}
+ const attempts=[];
+ const googleParams=new URLSearchParams({q:clean+' when:7d',hl:'en-US',gl:'US',ceid:'US:en'});
+ const bingParams=new URLSearchParams({q:clean,format:'RSS'});
+ const sources=[
+  {name:'Google News public RSS',host:'news.google.com',url:'https://news.google.com/rss/search?'+googleParams},
+  {name:'Bing News public RSS',host:'www.bing.com',url:'https://www.bing.com/news/search?'+bingParams}
+ ];
+ const topic=/\b(stock|market|finance|econom|earnings|business|oil|crude|inflation|bank|sector|etf|share|nasdaq|spx)\b/i.test(clean)?'business':/\b(tech|ai|software|semiconductor|nvidia|computer)\b/i.test(clean)?'technology':'world';
+ sources.push({name:'BBC News '+topic+' RSS (category feed, not query search)',host:'feeds.bbci.co.uk',url:'https://feeds.bbci.co.uk/news/'+(topic==='world'?'world':topic)+'/rss.xml',isCategory:true});
+ for(const source of sources){
+  try{
+   let headlines=await fetchRssAt(source.url,source.host);
+   if(source.isCategory){
+    headlines=headlines.map(x=>({...x,relevance:relevanceScore(x,clean)})).filter(x=>x.relevance>0).sort((a,b)=>b.relevance-a.relevance||Date.parse(b.publishedAt)-Date.parse(a.publishedAt));
+   }
+   const articles=headlines.slice(0,8).map(({relevance,...x})=>x);
+   if(!articles.length){attempts.push(source.name+' returned no relevant recent headlines');continue}
+   const data={source:source.name,method:source.isCategory?'category-feed headline filtering':'query RSS headlines',query:clean,fetchedAt:new Date().toISOString(),articles,disclaimer:'Dated headlines, not full-article research or live prices; BBC fallback matches only headlines from a broad category, and topical completeness is not guaranteed.'};
+   headlineCache.set(key,{cachedAt:Date.now(),data});
+   if(headlineCache.size>50){for(const [k,v] of headlineCache){if(Date.now()-v.cachedAt>5*60*1000)headlineCache.delete(k)}}
+   return data;
+  }catch(e){attempts.push(source.name+': '+e.message)}
+ }
+ throw Object.assign(Error('No public headline feed currently reachable for this topic. '+attempts.join('; ').slice(0,400)),{status:503});
 }
 function shouldFetchHeadlines(q){
  if(!FREE_NEWS_ENABLED||!recentWebIntent(q))return false;
