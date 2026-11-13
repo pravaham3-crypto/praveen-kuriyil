@@ -188,4 +188,8 @@ const server=http.createServer((req,res)=>{
    const content=fs.readFileSync(path.join(ROOT,file));res.writeHead(200,{'Content-Type':mime[path.extname(file)]||'application/octet-stream','Content-Length':content.length,'X-Content-Type-Options':'nosniff','Content-Security-Policy':"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'",'Cache-Control':file==='index.html'?'no-store':'public, max-age=3600'});res.end(req.method==='HEAD'?undefined:content);
  }catch(e){console.error('HTTP error',e.message);return json(res,500,{error:'Internal server error'});}
 });
-server.listen(PORT,'0.0.0.0',()=>console.log(`JARVIS General Brain v6 on ${PORT}. Mode: ${aiAvailable?provider+' cloud AI':'AXIOM rules core'}.`));
+server.listen(PORT,'0.0.0.0',()=>{
+ console.log(`JARVIS General Brain v6 on ${PORT}. Mode: ${aiAvailable?provider+' cloud AI':'AXIOM rules core'}.`);
+ // Non-sensitive one-time connectivity probe; never log financial content or credentials.
+ if(WEALTH_EXPORT_URL)readConfiguredExport('wealth').then(x=>console.log('JARVIS wealth export probe: reachable; machine-readable response received.')).catch(e=>console.warn('JARVIS wealth export probe: '+e.message));
+});
