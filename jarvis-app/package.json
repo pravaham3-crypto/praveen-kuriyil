@@ -1,0 +1,13 @@
+{
+  "name": "jarvis-axiom-voice-cloud",
+  "version": "3.0.0",
+  "private": true,
+  "description": "Private cloud-ready JARVIS voice dashboard - independent of current AXIOM systems",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --check server.js && node --check app-test.js"
+  }
+}
