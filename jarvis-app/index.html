@@ -156,7 +156,11 @@ header .headerTalk{background:#153b51;border:1px solid #4baec6;color:#a7f5ff;pad
 <section id="radar" class="tab"><div class="panel"><h2>Pre-Breakout Radar</h2><p class="small">All names and prices are synthetic. One exact pivot per stock. Volume expansion is an independent flag, not a prerequisite.</p><div class="formgrid"><div><label>Sector</label><select id="sectorFilter"><option value="">All sectors</option></select></div><div><label>Setup</label><select id="setupFilter"><option value="">All setups</option><option>SEPA/VCP</option><option>Momentum</option></select></div><div><label>Sort by</label><select id="sortFilter"><option value="score">AXIOM score</option><option value="distance">Closest pivot</option><option value="volume">Liquidity</option></select></div></div><div style="overflow:auto"><table><thead><tr><th>Ticker</th><th>Sector</th><th>Setup</th><th>Price</th><th>Pivot</th><th>Below</th><th>Avg vol</th><th>Score</th><th>2-day vol ↑</th><th>Watch</th></tr></thead><tbody id="stockRows"></tbody></table></div><div id="stockDetail" class="notice">Select a ticker to see its score breakdown.</div></div></section>
 <section id="planner" class="tab"><div class="panel"><h2>Trade Execution Planner · Simulation</h2><div class="formgrid"><div><label>Account equity (USD)</label><input id="equity" type="number" value="21000" min="1"></div><div><label>Entry price (USD)</label><input id="entry" type="number" value="100" min=".01" step=".01"></div><div><label>Position allocation (%)</label><input id="allocation" type="number" value="12" min="0" max="25" step="1"></div><div><label>Initial stop (%)</label><input id="stopPct" type="number" value="7" readonly></div><div><label>Profit target (%)</label><input id="targetPct" type="number" value="15" min="1"></div><div><label>Risk budget (% of equity)</label><input id="riskBudget" type="number" value="1" min="0.1" max="10" step="0.1"></div></div><div class="grid" id="planResults"></div><p class="small">Quantity is limited by both allocation and risk budget. Stop prices are theoretical and not guaranteed fills. The 7% initial stop is fixed for this demonstration.</p></div></section>
 <section id="portfolio" class="tab"><div class="grid"><div class="panel"><h3>Example Equity</h3><div class="value">$21,044</div></div><div class="panel"><h3>Win Rate</h3><div class="value green">63.6%</div></div><div class="panel"><h3>Expectancy</h3><div class="value">1.79%</div></div><div class="panel"><h3>Max Drawdown</h3><div class="value orange">−11.68%</div></div></div><div class="panel"><h2>Illustrative Performance KPIs</h2><p>66 sample closed trades · Historical example realized P&amp;L $5,944 · Sample return 39.37% · Profit factor: not available without gross win/loss ledger.</p><p class="small">These are fixed demonstration figures, not a live portfolio or a verified current account statement.</p></div></section>
-<section id="wealth" class="tab"><div class="grid"><div class="panel"><h3>2034 Goal</h3><div class="value">₹5 crore</div></div><div class="panel"><h3>India MF Target Allocation</h3><div class="value">60%</div></div><div class="panel"><h3>US Stocks</h3><div class="value">20%</div></div><div class="panel"><h3>Other Assets</h3><div class="value">20%</div></div></div><div class="two"><div class="panel"><h2>Illustrative SIP Projection</h2><div class="formgrid"><div><label>Starting investments (₹)</label><input id="initialINR" type="number" value="1500000"></div><div><label>Annual return assumption (%)</label><input id="cagr" type="number" value="12" min="-50" max="40"></div><div><label>Years</label><input id="years" type="number" value="8" min="1" max="40"></div></div><div class="value cyan" id="wealthResult"></div><div class="small">Model: ₹1 lakh monthly for first 12 months, then ₹2 lakh monthly. Monthly compounding, deposits at month-end. Scenario only; returns are not guaranteed.</div></div><div class="panel"><h2>Target Asset Mix</h2><div id="assetMix"></div><p class="small">Real estate allocation marked achieved in the user's roadmap; values here are planning percentages, not verified holdings.</p></div></div></section>
+<section id="wealth" class="tab"><div class="panel" style="margin-bottom:14px">
+ <div class="flex" style="justify-content:space-between"><h2>Family Wealth Dashboard · Connected Snapshot</h2><button class="btn secondary" type="button" id="refreshWealthTab">Refresh sourced wealth data</button></div>
+ <p class="small" id="wealthLiveStatus">No sourced data loaded in this browser tab yet. For real holdings and balances, enter your access code on Voice Assistant and refresh here. The projections underneath are scenario calculations, not live holdings.</p>
+ <div id="wealthLiveSnapshot" style="overflow:auto"></div>
+ </div><div class="grid"><div class="panel"><h3>2034 Goal</h3><div class="value">₹5 crore</div></div><div class="panel"><h3>India MF Target Allocation</h3><div class="value">60%</div></div><div class="panel"><h3>US Stocks</h3><div class="value">20%</div></div><div class="panel"><h3>Other Assets</h3><div class="value">20%</div></div></div><div class="two"><div class="panel"><h2>Illustrative SIP Projection</h2><div class="formgrid"><div><label>Starting investments (₹)</label><input id="initialINR" type="number" value="1500000"></div><div><label>Annual return assumption (%)</label><input id="cagr" type="number" value="12" min="-50" max="40"></div><div><label>Years</label><input id="years" type="number" value="8" min="1" max="40"></div></div><div class="value cyan" id="wealthResult"></div><div class="small">Model: ₹1 lakh monthly for first 12 months, then ₹2 lakh monthly. Monthly compounding, deposits at month-end. Scenario only; returns are not guaranteed.</div></div><div class="panel"><h2>Target Asset Mix</h2><div id="assetMix"></div><p class="small">Real estate allocation marked achieved in the user's roadmap; values here are planning percentages, not verified holdings.</p></div></div></section>
 
 <section id="connections" class="tab">
  <div class="panel" style="margin-bottom:15px">
@@ -467,7 +471,7 @@ function jarvisSetOrb(next,message,detail){
   loaded[kind]={obj,label,importedAt:new Date().toISOString()};
   const data=obj&&typeof obj==='object'&&Object.hasOwn(obj,'data')?obj.data:obj;
   const records=Array.isArray(data)?data:(Array.isArray(obj.records)?obj.records:null);
-  const date=obj?.asOf||obj?.updatedAt||obj?.lastUpdated||records?.[0]?.AsOf||records?.[0]?.asOf||'Not supplied by source';
+  const date=obj?.asOf||obj?.updatedAt||obj?.lastUpdated||data?.generatedAt||data?.updatedAt||obj?.fetchedAt||records?.[0]?.AsOf||records?.[0]?.asOf||'Not supplied by source';
   const count=records?records.length:null;
   const countInfo=count===null?'Structured snapshot':count+' record(s)';
   document.getElementById(kind+'Info').textContent=label+' · '+countInfo+' · As of: '+date+' · Source not independently verified for intraday freshness';
@@ -481,7 +485,23 @@ function jarvisSetOrb(next,message,detail){
    html='<pre style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:290px;overflow:auto">'+escapeText(JSON.stringify(data,null,2).slice(0,5500))+'</pre>';
   }
   document.getElementById(kind+'Preview').innerHTML=html;
+  if(kind==='wealth')renderWealthSnapshot(data,label,date);
  }
+ 
+ function renderWealthSnapshot(data,source,date){
+  const el=document.getElementById('wealthLiveSnapshot');
+  const status=document.getElementById('wealthLiveStatus');
+  if(!data||typeof data!=='object'){status.textContent='Wealth export did not contain a structured dataset.';el.textContent='';return}
+  const sections=[['Mutual Funds',data.mf],['Trading / US Portfolio',data.trading],['FX / Exchange Rates',data.fx]];
+  const cards=sections.filter(([name,value])=>value!==undefined).map(([name,value])=>{
+    const body=JSON.stringify(value,null,2)||'No available values';
+    return '<div class="panel" style="margin:9px 0;padding:12px"><h3>'+escapeText(name)+'</h3><pre style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:220px;overflow:auto">'+escapeText(body.slice(0,2400))+'</pre></div>';
+  });
+  const stateAvailable=Object.hasOwn(data,'dashboardState');
+  status.textContent=source+' · generated/updated '+date+' · '+cards.length+' financial sections · Saved dashboard state '+(stateAvailable?'included':'not included')+'. Read-only sourced snapshot; verify timing before making financial decisions.';
+  el.innerHTML=cards.join('')||'<p class="small">The export did not include recognizable MF, trading or FX sections.</p>';
+ }
+
  async function sync(kind){
   const info=document.getElementById(kind+'Info');
   if(!field()){info.textContent='Enter your private JARVIS access code in Voice Assistant first.';return}
@@ -517,6 +537,7 @@ function jarvisSetOrb(next,message,detail){
   });
  }
  document.getElementById('checkSources').addEventListener('click',refreshStatus);
+ document.getElementById('refreshWealthTab').addEventListener('click',()=>sync('wealth'));
  document.getElementById('askSynced').addEventListener('click',()=>{showTab('voice');document.getElementById('chatInput').value='Summarize my connected AXIOM and family wealth data with source dates, gaps, and next steps.';document.getElementById('chatInput').focus()});
  window.jarvisIntegrationContext=function(){
   if(!document.getElementById('includeIntegratedData').checked)return '';
