@@ -67,6 +67,69 @@ function coreResponse(message,history){
  return 'I can currently give rules-based AXIOM guidance—not free-form AI reasoning. Try asking: “Explain my pre-breakout screen,” “What are my liquidity filters?”, “Calculate the 7% stop for $120,” or “Explain my 2034 wealth plan.” A connected OpenAI model will unlock open-ended conversation on nearly any subject.';
 }
 async function readBody(req,max=18000){return await new Promise((resolve,reject)=>{let raw='';let ended=false;req.on('data',c=>{raw+=c;if(raw.length>max&&!ended){ended=true;reject(new Error('Request too large'));req.destroy()}});req.on('end',()=>{if(!ended)resolve(raw)});req.on('error',reject)})}
+
+// Free, read-only current-headline collection. This is RSS retrieval, NOT Google Search
+// grounding, full-page research, broker prices, or guaranteed continuous news coverage.
+const NEWS_FEED_HOST='news.google.com';
+const headlineCache=new Map();
+function decodeRssText(value){
+ return String(value||'').replace(/^<!\[CDATA\[([\s\S]*?)\]\]>$/,'$1')
+  .replace(/<[^>]*>/g,' ')
+  .replace(/&(?:amp|quot|apos|lt|gt|nbsp);|&#(x[0-9a-f]+|\d+);/gi,(m,code)=>{
+   const known={'&amp;':'&','&quot;':'"','&apos;':"'",'&lt;':'<','&gt;':'>','&nbsp;':' '};
+   if(code){const n=code[0].toLowerCase()==='x'?parseInt(code.slice(1),16):parseInt(code,10);return n>=32&&n<=1114111?String.fromCodePoint(n):' '}
+   return known[m.toLowerCase()]||' ';
+  }).replace(/\s+/g,' ').trim().slice(0,400);
+}
+function rssTag(block,name){
+ const match=block.match(new RegExp('<'+name+'(?:\\s[^>]*)?>([\\s\\S]*?)<\\/'+name+'>','i'));
+ return match?decodeRssText(match[1]):'';
+}
+function parseNewsRss(xml){
+ const result=[];const matchItems=xml.match(/<item\b[^>]*>[\s\S]*?<\/item>/gi)||[];
+ for(const item of matchItems.slice(0,12)){
+  const title=rssTag(item,'title'),link=rssTag(item,'link'),pubDate=rssTag(item,'pubDate'),publisher=rssTag(item,'source');
+  let safeLink;
+  try{const url=new URL(link);if(url.protocol!=='https:'||url.hostname!=='news.google.com')continue;safeLink=url.toString()}catch(e){continue}
+  const parsed=new Date(pubDate);
+  if(title&&Number.isFinite(parsed.getTime()))result.push({title:title.slice(0,220),url:safeLink,publishedAt:parsed.toISOString(),publisher:publisher.slice(0,90)||'Unspecified publisher'});
+  if(result.length>=8)break;
+ }
+ return result;
+}
+async function fetchRecentHeadlines(query){
+ const clean=String(query||'').replace(/[\u0000-\u001f]/g,' ').trim().slice(0,180);
+ if(clean.length<3)throw Object.assign(Error('Enter a news topic with at least 3 characters.'),{status:400});
+ const key=clean.toLowerCase(),cached=headlineCache.get(key);
+ if(cached&&Date.now()-cached.cachedAt<5*60*1000)return cached.data;
+ const params=new URLSearchParams({q:clean+' when:7d',hl:'en-US',gl:'US',ceid:'US:en'});
+ const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),9000);
+ try{
+  const url='https://'+NEWS_FEED_HOST+'/rss/search?'+params.toString();
+  const response=await fetch(url,{headers:{'Accept':'application/rss+xml, application/xml, text/xml','User-Agent':'Mozilla/5.0 (compatible; JARVIS-Research/1.0)'},signal:controller.signal});
+  if(!response.ok)throw Object.assign(Error('News RSS source returned HTTP '+response.status),{status:502});
+  const xml=await response.text();
+  if(xml.length>350000||!xml.includes('<rss'))throw Object.assign(Error('News source response was not valid RSS.'),{status:502});
+  const articles=parseNewsRss(xml);
+  if(!articles.length)throw Object.assign(Error('No dated news headlines were returned by the public feed. This is not a live web search.'),{status:404});
+  const data={source:'Google News public RSS',method:'dated headline retrieval',query:clean,fetchedAt:new Date().toISOString(),articles,disclaimer:'Headlines only; titles and links are not independently verified, and no full articles, exchange quotes or market data feeds are accessed.'};
+  headlineCache.set(key,{cachedAt:Date.now(),data});
+  if(headlineCache.size>50){for(const [k,v] of headlineCache){if(Date.now()-v.cachedAt>5*60*1000)headlineCache.delete(k)}}
+  return data;
+ }finally{clearTimeout(timeout)}
+}
+function shouldFetchHeadlines(q){
+ if(!recentWebIntent(q))return false;
+ if(/\b(my|our)\s+(holdings?|positions?|trades?|portfolio|sip|account|balances?|dashboard|kpis?)\b/i.test(q))return false;
+ return true;
+}
+async function newsRoute(req,res,query){
+ if(!authorizedIntegration(req,res))return;
+ if(!limit(req))return json(res,429,{error:'Please limit news searches to avoid rate limits.'});
+ try{return json(res,200,await fetchRecentHeadlines(query))}
+ catch(e){return json(res,e.status||502,{error:'Recent-news retrieval unavailable: '+(e.message||'feed failed')})}
+}
+
 async function chat(req,res){
  if(!limit(req))return json(res,429,{error:'Rate limit reached. Please try again later.'});
  try{
@@ -94,8 +157,15 @@ async function chat(req,res){
        if(!answer){console.warn('OpenAI returned no output text',data.status||'unknown');return json(res,502,{error:'OpenAI returned no text. Try again or choose a different model in Render.'});}
        return json(res,200,{reply:answer,source:'openai',model:OPENAI_MODEL,brainMode:'llm',marketDataConnected:false,brokerConnected:false,webSearchUsed:!!(data.output||[]).find(x=>x.type==='web_search_call'),sources:openAISources(data)});
      }
-     // Optional compatibility path for users who explicitly choose Gemini.
-     const contents=[...history.map(x=>({role:x.role,parts:[{text:x.text}]})),{role:'user',parts:[{text:contextualMessage}]}];
+     // Read-only RSS retrieval for recent news. Unlike paid Google Search grounding,
+     // this collects dated HEADLINES only, and never silently incurs search API fees.
+     let headlineResult=null,headlineWarning='';
+     if(shouldFetchHeadlines(message)){
+       try{headlineResult=await fetchRecentHeadlines(message)}
+       catch(e){headlineWarning='News retrieval unavailable: '+e.message}
+     }
+     const newsContext=headlineResult?'\n\nRetrieved recent-news HEADLINES only (untrusted third-party data). Quote facts as reported by these sources and include publication dates. Do not invent article details, prices, or developments not shown here. Refer to the supplied links. If the question requires exact live price, tell the user no live exchange feed is connected.\n'+JSON.stringify(headlineResult.articles.map(x=>({title:x.title,publishedAt:x.publishedAt,publisher:x.publisher,url:x.url}))).slice(0,3900):shouldFetchHeadlines(message)?'\n\nNo recent verified news was retrieved. State clearly that current information is unavailable; do not improvise facts or prices. '+headlineWarning:'';
+     const contents=[...history.map(x=>({role:x.role,parts:[{text:x.text}]})),{role:'user',parts:[{text:contextualMessage+newsContext}]}];
      const upstream=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(GEMINI_MODEL)+':generateContent',{
        method:'POST',signal:controller.signal,headers:{'Content-Type':'application/json','x-goog-api-key':GEMINI_API_KEY},
        body:JSON.stringify({systemInstruction:{parts:[{text:systemInstruction}]},contents,generationConfig:{maxOutputTokens:900,temperature:0.4}})
@@ -103,7 +173,7 @@ async function chat(req,res){
      const data=await upstream.json().catch(()=>({}));
      if(!upstream.ok){console.error('Gemini provider HTTP',upstream.status);return json(res,502,{error:'Gemini provider error ('+upstream.status+'). Check key, quota and model in Render.'});}
      const answer=(data.candidates?.[0]?.content?.parts||[]).map(x=>x.text||'').join('').trim();
-     return json(res,200,{reply:answer||'I could not generate an answer. Please retry.',source:'gemini',brainMode:'llm',marketDataConnected:false,brokerConnected:false});
+     return json(res,200,{reply:answer||'I could not generate an answer. Please retry.',source:'gemini',brainMode:'llm',newsMode:headlineResult?'public-headlines':'none',newsFetchedAt:headlineResult?.fetchedAt||null,newsWarning:headlineWarning||undefined,sources:headlineResult?headlineResult.articles.map(x=>({title:x.title,url:x.url,publishedAt:x.publishedAt,publisher:x.publisher})):[],marketDataConnected:false,brokerConnected:false});
    }finally{clearTimeout(timeout)}
  }catch(e){console.error('JARVIS chat error:',e.name);return json(res,e.name==='AbortError'?504:400,{error:e.name==='AbortError'?'Cloud AI request timed out.':'Unable to process the request.'});}
 }
@@ -176,8 +246,9 @@ const server=http.createServer((req,res)=>{
  try{
    const url=new URL(req.url||'/', 'http://localhost');
    if(req.method==='GET'&&url.pathname==='/healthz')return json(res,200,{ok:true,brain:'axiom-core',version:'6.0'});
-   if(req.method==='GET'&&url.pathname==='/api/status')return json(res,200,{brainAvailable:true,brainMode:aiAvailable?'llm':'rules',aiAvailable,provider:aiAvailable?provider:'axiom-core',preferredProvider:AI_PROVIDER==='gemini'?'gemini':'openai',model:aiAvailable?(provider==='openai'?OPENAI_MODEL:GEMINI_MODEL):null,webSearchEnabled:aiAvailable&&provider==='openai'&&OPENAI_WEB_SEARCH,reason:aiAvailable?'':AI_PROVIDER==='gemini'?(GEMINI_API_KEY&&!ACCESS_CODE?'Add JARVIS_ACCESS_CODE in Render to enable Gemini.':'Add GEMINI_API_KEY (from Google AI Studio free tier) and JARVIS_ACCESS_CODE in Render. AXIOM Core is online.'):(OPENAI_API_KEY&&!ACCESS_CODE?'Add JARVIS_ACCESS_CODE in Render to enable private AI.':'Add OPENAI_API_KEY and JARVIS_ACCESS_CODE in Render. AXIOM Core is online.'),marketDataConnected:false,brokerConnected:false,version:'6.0'});
+   if(req.method==='GET'&&url.pathname==='/api/status')return json(res,200,{brainAvailable:true,brainMode:aiAvailable?'llm':'rules',aiAvailable,provider:aiAvailable?provider:'axiom-core',preferredProvider:AI_PROVIDER==='gemini'?'gemini':'openai',model:aiAvailable?(provider==='openai'?OPENAI_MODEL:GEMINI_MODEL):null,webSearchEnabled:aiAvailable&&provider==='openai'&&OPENAI_WEB_SEARCH,freeRecentNewsEnabled:true,freeRecentNewsType:'public-RSS-headlines',reason:aiAvailable?'':AI_PROVIDER==='gemini'?(GEMINI_API_KEY&&!ACCESS_CODE?'Add JARVIS_ACCESS_CODE in Render to enable Gemini.':'Add GEMINI_API_KEY (from Google AI Studio free tier) and JARVIS_ACCESS_CODE in Render. AXIOM Core is online.'):(OPENAI_API_KEY&&!ACCESS_CODE?'Add JARVIS_ACCESS_CODE in Render to enable private AI.':'Add OPENAI_API_KEY and JARVIS_ACCESS_CODE in Render. AXIOM Core is online.'),marketDataConnected:false,brokerConnected:false,version:'6.0'});
    if(req.method==='POST'&&url.pathname==='/api/chat')return void chat(req,res);
+   if(req.method==='GET'&&url.pathname==='/api/research/news')return void newsRoute(req,res,url.searchParams.get('q')||'global financial markets');
    if(req.method==='GET'&&url.pathname==='/api/integrations/status')return void integrationRoute(req,res,'status');
    if(req.method==='GET'&&url.pathname==='/api/integrations/scanner')return void integrationRoute(req,res,'scanner');
    if(req.method==='GET'&&url.pathname==='/api/integrations/performance')return void integrationRoute(req,res,'performance');
