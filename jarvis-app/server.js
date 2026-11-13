@@ -345,9 +345,9 @@ async function realtimeSearch(req,res){
  try{
   const r=await fetch('https://api.openai.com/v1/responses',{method:'POST',signal:controller.signal,headers:{Authorization:'Bearer '+OPENAI_API_KEY,'Content-Type':'application/json'},body:JSON.stringify({model:'gpt-4.1-mini',store:false,max_output_tokens:400,tools:[{type:'web_search',search_context_size:'medium'}],input:'Search public sites and answer this specific current question with verifiable details, citations and exact price/currency if available; explicitly state what is not verified: '+query})});
   const obj=await r.json().catch(()=>({}));
-  if(!r.ok){console.warn('Voice search HTTP',r.status);return json(res,502,{error:'Search provider unavailable, HTTP '+r.status})}
+  if(!r.ok){refundTrial(voiceSearches,req);console.warn('Voice search HTTP',r.status);return json(res,502,{error:'Search provider unavailable, HTTP '+r.status})}
   return json(res,200,webOutput(obj));
- }catch(e){return json(res,504,{error:'Web search timed out; do not invent current prices.'})}finally{clearTimeout(timer)}
+ }catch(e){refundTrial(voiceSearches,req);return json(res,504,{error:'Web search timed out; do not invent current prices.'})}finally{clearTimeout(timer)}
 }
 
 const AXIOM_SCANNER_URL='https://api.github.com/repos/pravaham3-crypto/ai-long-short-scanner/contents/snapshots/prebreakout_long.csv';
