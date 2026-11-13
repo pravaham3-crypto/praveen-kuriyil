@@ -1,27 +1,58 @@
-# JARVIS AXIOM — General Intelligence v6
+# JARVIS AXIOM — Hybrid AI and Read-Only Data Connections
 
-This is the independent JARVIS voice dashboard with the cyan audio orb, seven dashboard sections, browser speech, a rules-only AXIOM Core fallback and **optional OpenAI GPT brain** for general conversation, complex financial analysis and everyday questions. It is separate from the existing AXIOM scanners and trading dashboard.
+JARVIS is a standalone Render-hosted voice dashboard. It uses **Gemini** when configured, supports optional billed OpenAI, and falls back to the local AXIOM rules engine. Your original scanner, trading dashboard, and finance apps remain separate and unchanged.
 
-## Hosting
+## Hosted app
 
-The live Render Web Service uses this project in the GitHub repository `pravaham3-crypto/praveen-kuriyil`, folder `jarvis-app`. Its build command is `cd jarvis-app && npm install --omit=dev` and start command is `cd jarvis-app && npm start`.
+https://jarvis-axiom-voice-pravaham3.onrender.com
 
-## Enable OpenAI GPT (Render → Environment)
+Render service: `srv-dbrcsi5g1s2s7384kptg`. Node.js 20+; build `cd jarvis-app && npm install --omit=dev`; start `cd jarvis-app && npm start`.
 
-- `AI_PROVIDER=openai` (preferred)
-- `OPENAI_MODEL=gpt-6.1-sol` (can be changed to another model available to your OpenAI API organization; review its current prices)
-- `OPENAI_API_KEY`: private OpenAI API project key from https://platform.openai.com/api-keys
-- `JARVIS_ACCESS_CODE`: private, long random passphrase chosen by the user; do not place the passphrase in GitHub or chat messages
-- Optional: `OPENAI_WEB_SEARCH=true` enables paid on-demand web searches for clearly current/news requests. Leave off to avoid search charges; web search is not a real-time trading feed. Search providers may incur separate charges.
+## Gemini hybrid brain (current)
 
-Never store either secret in HTML, a Git repository, source files, or this README. ChatGPT subscription and OpenAI API billing may be separate. Review costs and limits on platform.openai.com.
+Add these secrets in **Render Web Service → Environment**, not in GitHub:
 
-After saving environment variables, Render redeploys the service. Open the JARVIS HTTPS URL → Voice Assistant → enter the *JARVIS access code only* → Unlock AI chat. `GET /api/status` tells whether the provider is active without revealing secrets. Messages sent to the AI model are passed through the server and not saved in its own database (`store:false` for OpenAI API requests). The current conversation history is kept in the browser session, not synced across devices.
+- `AI_PROVIDER=gemini`
+- `GEMINI_MODEL=gemini-3.5-flash-lite`
+- `GEMINI_API_KEY` — your private Google AI Studio API key, subject to free-tier limits and terms.
+- `JARVIS_ACCESS_CODE` — your own strong private password, required for AI and the data connectors.
 
-## What it can and cannot do
+`AI_PROVIDER=gemini` is isolated: **it does not fall back to the paid OpenAI provider** even if an OpenAI key is still configured. Optional: `AI_PROVIDER=openai`, `OPENAI_API_KEY`, `OPENAI_MODEL` with separate API billing. `GET /api/status` reports activation without exposing secrets.
 
-General-purpose questions including technology, financial history, science and everyday knowledge, with strong financial-analysis system instructions. Optional paid web search can provide current public sources; by itself it is not a validated stock market feed. The home page's market metrics and pre-breakout tickers are synthetic demonstrations, not verified opportunities. There is no broker/IBKR connection, automatic trading, live AXIOM scan, real-time prices, cloud note sync, or background monitoring. The original scanners and scheduled tasks are untouched.
+## Read-only Data Connections tab
 
-## Run locally
+This tab provides three integration adapters. All `/api/integrations/*` GET routes require the `X-JARVIS-Access-Code` header matching `JARVIS_ACCESS_CODE`; there is no browser-exposed GitHub token or external dashboard token. Responses have `Cache-Control: no-store`.
 
-Node.js 20+ required. Run `npm start`, then open `http://localhost:10000`. Without OpenAI environment variables, the rules-only AXIOM Core continues to respond.
+### 1. AXIOM screener — automated, private CSV fetch after setup
+
+The source is the user's **private** `pravaham3-crypto/ai-long-short-scanner` repository, file `snapshots/prebreakout_long.csv` on `main`. JARVIS does **not** edit it.
+
+- Create a GitHub **fine-grained personal access token**, limited to this repository with **Contents: Read-only** and as short an expiry as practical.
+- Set `AXIOM_GITHUB_READ_TOKEN` to that secret in the JARVIS Render environment.
+- Open JARVIS → Data Connections → **Sync scanner now**, after entering the private JARVIS access code on the Voice Assistant tab.
+
+The result returns the current CSV snapshot with a visible `AsOf` field, status, score, approximate pivot, RVOL and liquidity. The CSV is research output only: no current ticks, chart-defined precise pivot verification, earnings validation, or trade execution. Never publish the source private repository or its access token.
+
+### 2. AXIOM performance dashboard
+
+For direct sync, the source app must publish a **read-only JSON or CSV export endpoint**, accessible from JARVIS Render (and authenticated if necessary). Only then set `AXIOM_KPI_EXPORT_URL` (https://*.chatgpt.site) and, if needed, `AXIOM_KPI_EXPORT_TOKEN` in Render. No endpoint has been verified yet. Otherwise export a CSV/JSON file manually, then import it in JARVIS Data Connections.
+
+### 3. Family Wealth Dashboard — Road to 2034
+
+Source: https://family-wealth-dashboard-public-pravaham3-5020s-projects.vercel.app/
+
+Direct sync requires an authorized, **read-only** JSON/CSV export endpoint in that Vercel project. The connected Vercel account did not enumerate this project; the site could not be inspected, so no endpoint or data schema is assumed. After an endpoint is created and verified, configure `WEALTH_EXPORT_URL` (https://*.vercel.app) and optional `WEALTH_EXPORT_TOKEN` in Render.
+
+Until then, export a CSV/JSON file from the wealth dashboard and import it via the JARVIS Data Connections tab. The imported snapshot is displayed with source, row count and date when provided. Imported files stay in browser tab memory; JARVIS does not silently save financial records on the server.
+
+## AI analysis of imported data
+
+Off by default. The user must enable the **Include currently loaded financial data** checkbox. Only a bounded summary (up to 4,500 characters) of loaded snapshots then accompanies user questions to Gemini; do not upload unnecessary identifiers. Users should verify data quality and account balances independently.
+
+## Security and boundaries
+
+- No brokerage keys, IBKR order routing, live execution or automated trades.
+- No modifications to AXIOM rules, current scanner schedules, source financial dashboards or their accounts.
+- The first seven dashboard sections still show illustrative or scenario values unless explicitly replaced by connected source data; the Data Connections screen is where real imported/synced snapshots are presented.
+- API credentials remain server-side. Never paste tokens, private data or access codes into chat or a public repository.
+- HTTP exports must be machine-readable JSON or CSV, not HTML or login pages; the server refuses redirect responses and caps body size.
