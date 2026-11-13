@@ -28,6 +28,14 @@ Add these secrets in **Render Web Service → Environment**, not in GitHub:
 - **Gemini 3.5 Flash-Lite on the Google free API tier does not include built-in Google Search grounding** according to Google's published pricing. A paid-tier search feature must not be enabled without deliberate approval. Gemini 2.5 Flash-Lite historically offered free grounding, but access to legacy 2.5 models is restricted for newer projects. The RSS route avoids those complications.
 - **Market quotes, historical OHLCV, financial filings, earnings calendars, order book data and verified live sector scans are not supplied by this RSS feed.** Use trusted structured financial sources and the AXIOM scanner instead.
 
+## ChatGPT Plus Brain — primary AI command center
+
+The **ChatGPT Plus Brain** tab and main Overview button are a manual, transparent handoff to `https://chatgpt.com/`. ChatGPT Plus is a subscription to the ChatGPT product; it is **not** a credential for a third-party application's OpenAI API. To avoid extra OpenAI API usage, use ChatGPT in its own app/browser for general questions, independent web research, AXIOM scan analysis, and Wealth 2034 planning.
+
+The user chooses one of four workflow prompts (**General JARVIS**, **Run AXIOM scan**, **Analyze trading KPIs**, or **Review Wealth 2034**) and clicks **Copy request**; then **Open ChatGPT** and paste the request. This does not auto-send a website conversation, private key, financial snapshot, or model request into ChatGPT. The existing GitHub, market data, IBKR, or other connected apps available in the ChatGPT conversation are separate from the Render backend.
+
+This is an explicit user-driven handoff, not embedded ChatGPT, automatic Plus-to-API billing conversion, a live remote ChatGPT connector, or a promise of unrestricted real-time quotes. Existing AXIOM scanner rules, automations, IBKR positions, and dashboard records are not changed by the handoff.
+
 ## Read-only Data Connections tab
 
 This tab provides three integration adapters. All `/api/integrations/*` GET routes require the `X-JARVIS-Access-Code` header matching `JARVIS_ACCESS_CODE`; there is no browser-exposed GitHub token or external dashboard token. Responses have `Cache-Control: no-store`.
