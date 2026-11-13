@@ -21,7 +21,7 @@ Add these secrets in **Render Web Service → Environment**, not in GitHub:
 
 ## Recent News Desk and Gemini's current-information limitations
 
-- JARVIS now includes a **Recent News Desk** with user-triggered recent headline retrieval from the public Google News RSS feed. It does not use paid Gemini Google Search grounding, an additional API key, or your trading account.
+- JARVIS now includes a **Recent News Desk** with user-triggered recent headline retrieval from public RSS feeds. It attempts query-specific Google News, then Bing News, then relevance-filtered BBC topic headlines as a limited fallback. It does not use paid Gemini Google Search grounding, an additional API key, or your trading account.
 - Open **Recent News Desk**, enter a query, and fetch dated headlines. This endpoint is `GET /api/research/news?q=<topic>`, protected by the private JARVIS access code and a request limit. Results display headline, publisher, date and a Google News link.
 - In Voice Assistant, questions with an explicit recent-news intent automatically fetch up to eight dated headlines (when public RSS is reachable) and supply them as **untrusted source summaries** to Gemini. The response displays source links. This is *not full web search, full-article extraction, or guaranteed current coverage*; feed availability and timestamps must be verified.
 - The service limits RSS headlines to 7-day search queries and caches retrieval for five minutes to avoid excessive requests. Retrieval failures must be shown as unavailable; Gemini should not invent current facts.
