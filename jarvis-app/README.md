@@ -19,6 +19,15 @@ Add these secrets in **Render Web Service → Environment**, not in GitHub:
 
 `AI_PROVIDER=gemini` is isolated: **it does not fall back to the paid OpenAI provider** even if an OpenAI key is still configured. Optional: `AI_PROVIDER=openai`, `OPENAI_API_KEY`, `OPENAI_MODEL` with separate API billing. `GET /api/status` reports activation without exposing secrets.
 
+## Recent News Desk and Gemini's current-information limitations
+
+- JARVIS now includes a **Recent News Desk** with user-triggered recent headline retrieval from the public Google News RSS feed. It does not use paid Gemini Google Search grounding, an additional API key, or your trading account.
+- Open **Recent News Desk**, enter a query, and fetch dated headlines. This endpoint is `GET /api/research/news?q=<topic>`, protected by the private JARVIS access code and a request limit. Results display headline, publisher, date and a Google News link.
+- In Voice Assistant, questions with an explicit recent-news intent automatically fetch up to eight dated headlines (when public RSS is reachable) and supply them as **untrusted source summaries** to Gemini. The response displays source links. This is *not full web search, full-article extraction, or guaranteed current coverage*; feed availability and timestamps must be verified.
+- The service limits RSS headlines to 7-day search queries and caches retrieval for five minutes to avoid excessive requests. Retrieval failures must be shown as unavailable; Gemini should not invent current facts.
+- **Gemini 3.5 Flash-Lite on the Google free API tier does not include built-in Google Search grounding** according to Google's published pricing. A paid-tier search feature must not be enabled without deliberate approval. Gemini 2.5 Flash-Lite historically offered free grounding, but access to legacy 2.5 models is restricted for newer projects. The RSS route avoids those complications.
+- **Market quotes, historical OHLCV, financial filings, earnings calendars, order book data and verified live sector scans are not supplied by this RSS feed.** Use trusted structured financial sources and the AXIOM scanner instead.
+
 ## Read-only Data Connections tab
 
 This tab provides three integration adapters. All `/api/integrations/*` GET routes require the `X-JARVIS-Access-Code` header matching `JARVIS_ACCESS_CODE`; there is no browser-exposed GitHub token or external dashboard token. Responses have `Cache-Control: no-store`.
