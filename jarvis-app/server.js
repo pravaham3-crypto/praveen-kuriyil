@@ -17,6 +17,7 @@ const AXIOM_KPI_EXPORT_URL = process.env.AXIOM_KPI_EXPORT_URL || '';
 const AXIOM_KPI_EXPORT_TOKEN = process.env.AXIOM_KPI_EXPORT_TOKEN || '';
 const WEALTH_EXPORT_URL = process.env.WEALTH_EXPORT_URL || '';
 const WEALTH_EXPORT_TOKEN = process.env.WEALTH_EXPORT_TOKEN || '';
+const FREE_NEWS_ENABLED = process.env.JARVIS_NEWS_FEED_ENABLED === 'true';
 // API provider secrets remain on the server, never in HTML or source control.
 // Respect an explicit provider choice. In Gemini/free mode, NEVER silently call OpenAI.
 const provider = AI_PROVIDER === 'gemini' ? (GEMINI_API_KEY ? 'gemini' : 'core')
@@ -98,6 +99,7 @@ function parseNewsRss(xml){
  return result;
 }
 async function fetchRecentHeadlines(query){
+ if(!FREE_NEWS_ENABLED)throw Object.assign(Error('Public news retrieval is currently disabled.'),{status:503});
  const clean=String(query||'').replace(/[\u0000-\u001f]/g,' ').trim().slice(0,180);
  if(clean.length<3)throw Object.assign(Error('Enter a news topic with at least 3 characters.'),{status:400});
  const key=clean.toLowerCase(),cached=headlineCache.get(key);
@@ -119,7 +121,7 @@ async function fetchRecentHeadlines(query){
  }finally{clearTimeout(timeout)}
 }
 function shouldFetchHeadlines(q){
- if(!recentWebIntent(q))return false;
+ if(!FREE_NEWS_ENABLED||!recentWebIntent(q))return false;
  if(/\b(my|our)\s+(holdings?|positions?|trades?|portfolio|sip|account|balances?|dashboard|kpis?)\b/i.test(q))return false;
  return true;
 }
@@ -246,7 +248,7 @@ const server=http.createServer((req,res)=>{
  try{
    const url=new URL(req.url||'/', 'http://localhost');
    if(req.method==='GET'&&url.pathname==='/healthz')return json(res,200,{ok:true,brain:'axiom-core',version:'6.0'});
-   if(req.method==='GET'&&url.pathname==='/api/status')return json(res,200,{brainAvailable:true,brainMode:aiAvailable?'llm':'rules',aiAvailable,provider:aiAvailable?provider:'axiom-core',preferredProvider:AI_PROVIDER==='gemini'?'gemini':'openai',model:aiAvailable?(provider==='openai'?OPENAI_MODEL:GEMINI_MODEL):null,webSearchEnabled:aiAvailable&&provider==='openai'&&OPENAI_WEB_SEARCH,freeRecentNewsEnabled:true,freeRecentNewsType:'public-RSS-headlines',reason:aiAvailable?'':AI_PROVIDER==='gemini'?(GEMINI_API_KEY&&!ACCESS_CODE?'Add JARVIS_ACCESS_CODE in Render to enable Gemini.':'Add GEMINI_API_KEY (from Google AI Studio free tier) and JARVIS_ACCESS_CODE in Render. AXIOM Core is online.'):(OPENAI_API_KEY&&!ACCESS_CODE?'Add JARVIS_ACCESS_CODE in Render to enable private AI.':'Add OPENAI_API_KEY and JARVIS_ACCESS_CODE in Render. AXIOM Core is online.'),marketDataConnected:false,brokerConnected:false,version:'6.0'});
+   if(req.method==='GET'&&url.pathname==='/api/status')return json(res,200,{brainAvailable:true,brainMode:aiAvailable?'llm':'rules',aiAvailable,provider:aiAvailable?provider:'axiom-core',preferredProvider:AI_PROVIDER==='gemini'?'gemini':'openai',model:aiAvailable?(provider==='openai'?OPENAI_MODEL:GEMINI_MODEL):null,webSearchEnabled:aiAvailable&&provider==='openai'&&OPENAI_WEB_SEARCH,freeRecentNewsEnabled:FREE_NEWS_ENABLED,freeRecentNewsType:'public-RSS-headlines',reason:aiAvailable?'':AI_PROVIDER==='gemini'?(GEMINI_API_KEY&&!ACCESS_CODE?'Add JARVIS_ACCESS_CODE in Render to enable Gemini.':'Add GEMINI_API_KEY (from Google AI Studio free tier) and JARVIS_ACCESS_CODE in Render. AXIOM Core is online.'):(OPENAI_API_KEY&&!ACCESS_CODE?'Add JARVIS_ACCESS_CODE in Render to enable private AI.':'Add OPENAI_API_KEY and JARVIS_ACCESS_CODE in Render. AXIOM Core is online.'),marketDataConnected:false,brokerConnected:false,version:'6.0'});
    if(req.method==='POST'&&url.pathname==='/api/chat')return void chat(req,res);
    if(req.method==='GET'&&url.pathname==='/api/research/news')return void newsRoute(req,res,url.searchParams.get('q')||'global financial markets');
    if(req.method==='GET'&&url.pathname==='/api/integrations/status')return void integrationRoute(req,res,'status');
@@ -262,6 +264,6 @@ const server=http.createServer((req,res)=>{
 server.listen(PORT,'0.0.0.0',()=>{
  console.log(`JARVIS General Brain v6 on ${PORT}. Mode: ${aiAvailable?provider+' cloud AI':'AXIOM rules core'}.`);
  // Non-sensitive one-time connectivity probe; never log financial content or credentials.
- fetchRecentHeadlines('US stock market').then(d=>console.log('JARVIS recent-news probe: '+d.articles.length+' dated headlines available.')).catch(e=>console.warn('JARVIS recent-news probe failed: '+e.message));
+ if(FREE_NEWS_ENABLED)fetchRecentHeadlines('US stock market').then(d=>console.log('JARVIS recent-news probe: '+d.articles.length+' dated headlines available.')).catch(e=>console.warn('JARVIS recent-news probe failed: '+e.message));
  if(WEALTH_EXPORT_URL)readConfiguredExport('wealth').then(x=>{const d=x.data;console.log('JARVIS wealth export probe: JSON type='+typeof d+', topLevelKeys='+(d&&typeof d==='object'?Object.keys(d).slice(0,24).join('|'):'none')+', records='+String(Array.isArray(d)?d.length:('none')));}).catch(e=>console.warn('JARVIS wealth export probe: '+e.message));
 });
