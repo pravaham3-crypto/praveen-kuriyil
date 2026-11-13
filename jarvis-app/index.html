@@ -651,17 +651,44 @@ function jarvisSetOrb(next,message,detail){
  document.getElementById('askSynced').addEventListener('click',()=>{showTab('voice');document.getElementById('chatInput').value='Summarize my connected AXIOM and family wealth data with source dates, gaps, and next steps.';document.getElementById('chatInput').focus()});
  window.jarvisIntegrationContext=function(){
   if(!document.getElementById('includeIntegratedData').checked)return '';
-  const context={note:'Source-provided, read-only snapshots; no real-time guarantee; do not execute trades.'};
+  const context={sourcePolicy:'User-approved, read-only, dated financial snapshots. Never treat figures as live ticks or execute transactions.'};
   for(const kind of kinds){
-   const value=loaded[kind];if(!value)continue;
-   const obj=value.obj,data=Object.hasOwn(obj||{},'data')?obj.data:obj;
-   const records=Array.isArray(data)?data:obj?.records;
+   const loadedEntry=loaded[kind];
+   if(!loadedEntry)continue;
+   const obj=loadedEntry.obj;
+   const data=safeObject(obj)&&Object.hasOwn(obj,'data')?obj.data:obj;
+   if(kind==='wealth'&&safeObject(data)&&Array.isArray(data.mf)){
+    const groups={};
+    let fallbackNavs=0;
+    for(const fund of data.mf){
+     const account=String(fund?.account||'Unassigned');
+     groups[account]=(groups[account]||0)+(Number(fund?.current)||0);
+     if(fund?.liveNav===null||fund?.liveNav===undefined||String(fund?.source||'').toLowerCase().includes('fallback'))fallbackNavs++;
+    }
+    context.wealth={
+     source:loadedEntry.label,
+     responseGeneratedAt:data.generatedAt||obj.fetchedAt||'unknown',
+     underlyingNavDates:[...new Set(data.mf.map(f=>dateLabel(f?.asOf)))].slice(0,5),
+     usdInr:Number.isFinite(Number(data.fx))?Number(data.fx):null,
+     count:data.mf.length,
+     navCheckCount:fallbackNavs,
+     reportedFundValuesByAccountINR:Object.fromEntries(Object.entries(groups).slice(0,12).map(([k,n])=>[k,Math.round(n)])),
+     holdings:data.mf.slice(0,8).map(f=>({account:f.account,scheme:f.scheme,units:f.units,reportedValueINR:Math.round(Number(f.current)||0),navUsed:f.navUsed,navSource:f.source,navAsOf:dateLabel(f.asOf)})),
+     tradingFeedNote:'Family wealth bridge trading feed is NOT the live AXIOM performance dashboard',
+     balanceNote:'Fund row sums may include overlapping goal buckets; not a reconciled net worth total'
+    };
+    continue;
+   }
+   const records=Array.isArray(data)?data:(Array.isArray(obj?.records)?obj.records:null);
    if(records){
-    const subset=kind==='scanner'?records.slice(0,12).map(row=>({Ticker:row.Ticker,Status:row.Status,Score:row.Score,Close:row.Close,Pivot:row.Pivot,DistancePct:row.DistancePct,AsOf:row.AsOf})):records.slice(0,8);
-    context[kind]={source:value.label,asOf:obj?.asOf||records[0]?.AsOf||'unknown',records:subset,count:records.length};
-   }else{context[kind]={source:value.label,summary:data}}
+    context[kind]={source:loadedEntry.label,asOf:obj?.asOf||records[0]?.AsOf||'unknown',
+     count:records.length,records:kind==='scanner'?records.slice(0,10).map(row=>({Ticker:row.Ticker,Status:row.Status,Score:row.Score,Close:row.Close,Pivot:row.Pivot,DistancePct:row.DistancePct,AsOf:row.AsOf})):records.slice(0,5)};
+   }else{
+    context[kind]={source:loadedEntry.label,fields:safeObject(data)?Object.keys(data).slice(0,12):[],note:'Structured source loaded; see Data Connections for details'};
+   }
   }
-  return JSON.stringify(context).slice(0,4500);
+  const json=JSON.stringify(context);
+  return json.length<=4500?json:json.slice(0,4450)+'… (context shortened; see JARVIS Data Connections)';
  };
 })();
 </script>
