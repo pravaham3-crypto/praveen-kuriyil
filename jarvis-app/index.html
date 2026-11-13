@@ -143,7 +143,7 @@ header .headerTalk{background:#153b51;border:1px solid #4baec6;color:#a7f5ff;pad
 @media(max-width:620px){.jarvis-orb .orb-stage{transform:scale(.71);transform-origin:center;margin:-61px auto -61px;width:470px;max-width:none;left:50%;margin-left:-235px}.jarvis-orb .small-marker{display:none}.jarvis-orb .control{min-width:91px;padding:11px 9px}.jarvis-orb .topbar{padding:15px}.jarvis-orb .center{padding:20px 8px 14px}.jarvis-orb .brand-title{font-size:12px}.jarvis-orb .brand-sub{font-size:8px}.jarvis-orb .bottombar{padding:14px;font-size:9px}.jarvis-orb .controls{gap:7px}}
 @media(max-width:380px){.jarvis-orb .orb-stage{transform:scale(.63);margin:-78px auto -78px;margin-left:-235px}.jarvis-orb .control{min-width:83px;font-size:10px}}
 
-</style></head><body><aside><div class="logo">◉ JARVIS</div><button class="nav active" data-tab="overview">◈ Overview</button><button class="nav" data-tab="plus">✦ ChatGPT Plus Brain</button><button class="nav" data-tab="radar">◎ Pre-Breakout Radar</button><button class="nav" data-tab="planner">⌖ Trade Planner</button><button class="nav" data-tab="portfolio">▥ Portfolio KPIs</button><button class="nav" data-tab="wealth">◇ Wealth 2034</button><button class="nav" data-tab="news">◉ Recent News Desk</button><button class="nav" data-tab="connections">⇄ Data Connections</button><button class="nav" data-tab="voice">◉ Voice Assistant</button><button class="nav" data-tab="notes">▤ Research Notes</button><div class="sidefoot">JARVIS AXIOM · Hybrid Voice<br>Sample metrics · No broker feed</div></aside><main><header><div><h1 id="pageTitle">Command Overview</h1><div class="muted small">AXIOM Intelligence · Sample data only · No live market feed</div></div><button type="button" id="headerTalk" class="headerTalk">🎙 Voice Command</button><span class="tag">● DEMO / OFFLINE DATA</span></header><div class="notice">Dashboard prices, scores and KPIs below are illustrative, not live AXIOM or broker data. Your existing scanner and performance dashboard open separately through the workspace links; no automatic data sync or trade execution is enabled. The cloud AI provider has its own connection status.</div>
+</style></head><body><aside><div class="logo">◉ JARVIS</div><button class="nav active" data-tab="overview">◈ Overview</button><button class="nav" data-tab="plus">✦ ChatGPT Plus Brain</button><button class="nav" data-tab="radar">◎ Pre-Breakout Radar</button><button class="nav" data-tab="planner">⌖ Trade Planner</button><button class="nav" data-tab="portfolio">▥ Portfolio KPIs</button><button class="nav" data-tab="wealth">◇ Wealth 2034</button><button class="nav" data-tab="news">◉ Recent News Desk</button><button class="nav" data-tab="connections">⇄ Data Connections</button><button class="nav" data-tab="voice">◉ Voice Assistant</button><button class="nav" data-tab="notes">▤ Research Notes</button><div class="sidefoot">JARVIS AXIOM · Hybrid Voice<br>Sample metrics · No broker feed</div></aside><main><header><div><h1 id="pageTitle">Command Overview</h1><div class="muted small">AXIOM Intelligence · Sample data only · No live market feed</div></div><button type="button" id="headerTalk" class="headerTalk">🎙 Voice Command</button><span class="tag">● SAMPLE MARKET METRICS · SOURCED WEALTH AVAILABLE</span></header><div class="notice">Market prices, index charts, screening examples and portfolio KPIs on the Overview pages remain illustrative—not real-time quotes or verified current positions. Use Data Connections and Wealth 2034 for dated, sourced financial snapshots. AXIOM private scanner and trading KPI integration require separate read-only connections. No orders can be placed.</div>
 <section id="plus" class="tab">
 <div class="panel" style="margin-bottom:15px;border:1px solid #2b6c85;background:linear-gradient(125deg,#0e2636,#10263d)">
 <h2>✦ ChatGPT Plus · Primary JARVIS Brain</h2>
@@ -228,7 +228,7 @@ header .headerTalk{background:#153b51;border:1px solid #4baec6;color:#a7f5ff;pad
    <div class="small">Realized trading performance, expectancy, profit factor and open risk: sourced from your existing ledger, not JARVIS demo values</div>
    <div class="buttons"><button type="button" id="syncPerformance" class="btn">Sync KPI export</button><a target="_blank" rel="noopener noreferrer" href="https://trading-performance-risk-dashboard.pravaham3.chatgpt.site/">Open trading dashboard</a></div>
    <label for="importPerformance">Or import a CSV/JSON export</label><input type="file" id="importPerformance" accept=".csv,.json,text/csv,application/json">
-   <p id="performanceInfo" class="small">Not connected. Direct sync requires a verified read-only export URL from the trading dashboard.</p>
+   <p id="performanceInfo" class="small">Not connected. The trading dashboard has no verified read-only JSON/CSV API yet; use its export file or arrange a dedicated export.</p>
    <div id="performancePreview" class="small" style="overflow:auto;max-height:320px"></div>
   </div>
  </div>
@@ -237,7 +237,7 @@ header .headerTalk{background:#153b51;border:1px solid #4baec6;color:#a7f5ff;pad
   <div class="small">Connect the actual family wealth dashboard for assets, India mutual funds, US stocks, SIPs, liabilities and progress toward ₹5 crore. A scenario calculator does not replace verified holdings.</div>
   <div class="buttons"><button type="button" id="syncWealth" class="btn">Sync wealth export</button><a target="_blank" rel="noopener noreferrer" href="https://family-wealth-dashboard-public-pravaham3-5020s-projects.vercel.app/">Open Family Wealth Dashboard</a></div>
   <label for="importWealth">Or import a CSV/JSON export from Family Wealth Dashboard</label><input type="file" id="importWealth" accept=".csv,.json,text/csv,application/json">
-  <p id="wealthInfo" class="small">Not connected. The Vercel deployment/export API is not yet accessible to JARVIS. Manual import works if a readable export is available.</p>
+  <p id="wealthInfo" class="small">Read-only Family Wealth bridge is configured. Select Sync wealth export to retrieve the latest available dated snapshot.</p>
   <div id="wealthPreview" class="small" style="overflow:auto;max-height:350px"></div>
  </div>
  <div class="panel" style="margin-top:15px">
@@ -513,41 +513,105 @@ function jarvisSetOrb(next,message,detail){
   const head=(rows.shift()||[]).map(h=>h.trim().replace(/^\uFEFF/,''));
   return rows.map(row=>Object.fromEntries(head.map((h,i)=>[h,row[i]||''])));
  }
+
+ function formatInr(n){
+  const value=Number(n);
+  return Number.isFinite(value)?new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(value):'Not available';
+ }
+ function dateLabel(raw){
+  const str=String(raw??'').trim();
+  if(!str)return 'Not stated';
+  if(/^\d{5}(?:\.\d+)?$/.test(str)){
+   const dt=new Date(Date.UTC(1899,11,30)+Number(str)*86400000);
+   return Number.isFinite(dt.valueOf())?dt.toISOString().slice(0,10):'Unverified date';
+  }
+  const d=new Date(str);
+  return Number.isFinite(d.valueOf())?d.toISOString().slice(0,10):str.slice(0,28);
+ }
+ function safeObject(obj){return !!obj&&typeof obj==='object'&&!Array.isArray(obj)}
+ function asRows(value){return Array.isArray(value)?value:(Array.isArray(value?.records)?value.records:[])}
+ function wealthOverview(data){
+  const mf=Array.isArray(data.mf)?data.mf.slice(0,80):[];
+  const accountGroups=new Map();
+  for(const fund of mf){
+   if(!safeObject(fund))continue;
+   const key=String(fund.account||'Unassigned holdings').slice(0,80);
+   if(!accountGroups.has(key))accountGroups.set(key,[]);
+   accountGroups.get(key).push(fund);
+  }
+  const fallback=mf.filter(f=>String(f?.source||'').toLowerCase().includes('fallback')||f?.liveNav===null||f?.liveNav===undefined);
+  const accountCards=[...accountGroups].map(([account,funds])=>{
+   const sum=funds.reduce((a,f)=>a+(Number(f.current)||0),0);
+   const rows=funds.map(f=>{
+    const nav=Number(f.navUsed);
+    const type=String(f.source||'Unspecified source');
+    const missing=!Number.isFinite(Number(f.liveNav))||f.liveNav===null;
+    return '<tr><td>'+escapeText(f.scheme||f.code||'Unnamed scheme')+'</td>'+
+     '<td>'+escapeText(Number.isFinite(Number(f.units))?new Intl.NumberFormat('en-IN',{maximumFractionDigits:3}).format(Number(f.units)):'—')+'</td>'+
+     '<td>'+escapeText(Number.isFinite(nav)?nav.toFixed(2):'—')+'</td>'+
+     '<td>'+escapeText(formatInr(f.current))+'</td>'+
+     '<td>'+escapeText(type+(missing?' · check NAV':''))+'<div class="small">NAV date: '+escapeText(dateLabel(f.asOf))+'</div></td></tr>';
+   }).join('');
+   return '<div class="panel" style="padding:12px;margin-top:10px"><div class="row" style="align-items:center"><strong>'+escapeText(account)+'</strong><strong>'+escapeText(formatInr(sum))+'</strong></div>'+
+   '<div style="overflow:auto"><table style="width:100%;min-width:510px"><thead><tr><th>Fund / ETF</th><th>Units</th><th>NAV used</th><th>Reported value</th><th>Source and NAV date</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+  });
+  const total=mf.reduce((a,f)=>a+(Number(f?.current)||0),0);
+  const oldestDates=mf.map(f=>dateLabel(f.asOf)).filter(x=>/^\d{4}-\d{2}-\d{2}$/.test(x)).sort();
+  const navDates=oldestDates.length?(oldestDates[0]===oldestDates[oldestDates.length-1]?oldestDates[0]:(oldestDates[0]+' to '+oldestDates[oldestDates.length-1])):'Not established';
+  const tradingData=asRows(data.trading);
+  const tradingCount=tradingData.length;
+  const fx=Number(data.fx);
+  const header='<div class="grid" style="margin:12px 0">'+
+   '<div class="panel" style="padding:12px"><div class="small">Reported fund/ETF rows</div><div class="value">'+mf.length+'</div></div>'+
+   '<div class="panel" style="padding:12px"><div class="small">Sum of listed values</div><div class="value cyan" style="font-size:22px">'+escapeText(formatInr(total))+'</div><div class="small">Not a reconciled net-worth total</div></div>'+
+   '<div class="panel" style="padding:12px"><div class="small">Fallback / missing live NAV</div><div class="value orange">'+fallback.length+'</div></div>'+
+   '<div class="panel" style="padding:12px"><div class="small">USD/INR from source</div><div class="value">'+(Number.isFinite(fx)?escapeText(fx.toFixed(2)):'Unavailable')+'</div></div></div>';
+  const note='<p class="small">Source response generated: '+escapeText(dateLabel(data.generatedAt))+
+   ' · Underlying NAV date(s): '+escapeText(navDates)+
+   '. This is a dated, read-only Family Wealth export—not authenticated brokerage balances, a live market feed, or an independently reconciled net-worth calculation. Figures can include separate goal buckets and overlapping instruments.</p>';
+  const tradingNote='<p class="small">Saved dashboard state: '+(data.dashboardState?'present':'not supplied')+
+   ' · Finance-sheet trading feed: '+(Array.isArray(data.trading)?data.trading.length+' record(s)':safeObject(data.trading)?'included':'not supplied')+
+   '. These are <strong>not</strong> the independently verified current AXIOM trading KPI ledger.</p>';
+  return {html:header+note+accountCards.join('')+tradingNote, count:mf.length, navDates, fallbackCount:fallback.length, sourceDate:dateLabel(data.generatedAt)};
+ }
  function summarize(kind,obj,label){
   loaded[kind]={obj,label,importedAt:new Date().toISOString()};
-  const data=obj&&typeof obj==='object'&&Object.hasOwn(obj,'data')?obj.data:obj;
-  const records=Array.isArray(data)?data:(Array.isArray(obj.records)?obj.records:null);
-  const date=obj?.asOf||obj?.updatedAt||obj?.lastUpdated||data?.generatedAt||data?.updatedAt||obj?.fetchedAt||records?.[0]?.AsOf||records?.[0]?.asOf||'Not supplied by source';
-  const count=records?records.length:null;
-  const countInfo=count===null?'Structured snapshot':count+' record(s)';
-  document.getElementById(kind+'Info').textContent=label+' · '+countInfo+' · As of: '+date+' · Source not independently verified for intraday freshness';
-  let html='';
+  const data=safeObject(obj)&&Object.hasOwn(obj,'data')?obj.data:obj;
+  const records=Array.isArray(data)?data:(Array.isArray(obj?.records)?obj.records:null);
+  const date=obj?.asOf||data?.generatedAt||obj?.fetchedAt||records?.[0]?.AsOf||'Not supplied by source';
+  const info=document.getElementById(kind+'Info');
+  const preview=document.getElementById(kind+'Preview');
+  if(kind==='wealth'&&safeObject(data)&&Array.isArray(data.mf)){
+   const summary=wealthOverview(data);
+   info.textContent=label+' · '+summary.count+' fund/ETF rows · NAV date(s): '+summary.navDates+' · Bridge response: '+String(date)+' · '+summary.fallbackCount+' NAV check(s) required';
+   preview.innerHTML='<div class="small">Connected snapshot · Fund holdings shown below. Open Wealth 2034 for the full view.</div>'+summary.html;
+   renderWealthSnapshot(data,label,date);
+   return;
+  }
+  const count=records?.length;
+  info.textContent=label+' · '+(count===undefined?'Structured snapshot':count+' record(s)')+
+   ' · Source date: '+String(date)+' · Not a verified real-time market feed';
   if(records){
    const cells=kind==='scanner'?['Ticker','Status','Score','Close','Pivot','DistancePct','AsOf']:Object.keys(records[0]||{}).slice(0,7);
-   html='<table style="width:100%;border-collapse:collapse"><thead><tr>'+cells.map(x=>'<th>'+escapeText(x)+'</th>').join('')+'</tr></thead><tbody>';
-   html+=records.slice(0,15).map(row=>'<tr>'+cells.map(x=>'<td>'+escapeText(row[x])+'</td>').join('')+'</tr>').join('');
-   html+='</tbody></table>';
+   preview.innerHTML='<table style="width:100%;min-width:470px"><thead><tr>'+cells.map(x=>'<th>'+escapeText(x)+'</th>').join('')+
+    '</tr></thead><tbody>'+records.slice(0,25).map(row=>'<tr>'+cells.map(x=>'<td>'+escapeText(row?.[x])+'</td>').join('')+'</tr>').join('')+'</tbody></table>';
   }else{
-   html='<pre style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:290px;overflow:auto">'+escapeText(JSON.stringify(data,null,2).slice(0,5500))+'</pre>';
+   const entries=safeObject(data)?Object.entries(data).filter(([k])=>!/(token|password|secret|api.?key)/i.test(k)).slice(0,12):[];
+   preview.innerHTML='<table style="width:100%"><tbody>'+entries.map(([k,v])=>'<tr><th>'+escapeText(k)+'</th><td>'+escapeText(safeObject(v)||Array.isArray(v)?'Structured data available':v)+'</td></tr>').join('')+'</tbody></table>';
   }
-  document.getElementById(kind+'Preview').innerHTML=html;
-  if(kind==='wealth')renderWealthSnapshot(data,label,date);
  }
- 
  function renderWealthSnapshot(data,source,date){
-  const el=document.getElementById('wealthLiveSnapshot');
-  const status=document.getElementById('wealthLiveStatus');
-  if(!data||typeof data!=='object'){status.textContent='Wealth export did not contain a structured dataset.';el.textContent='';return}
-  const sections=[['Mutual Funds',data.mf],['Trading / US Portfolio',data.trading],['FX / Exchange Rates',data.fx]];
-  const cards=sections.filter(([name,value])=>value!==undefined).map(([name,value])=>{
-    const body=JSON.stringify(value,null,2)||'No available values';
-    return '<div class="panel" style="margin:9px 0;padding:12px"><h3>'+escapeText(name)+'</h3><pre style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:220px;overflow:auto">'+escapeText(body.slice(0,2400))+'</pre></div>';
-  });
-  const stateAvailable=Object.hasOwn(data,'dashboardState');
-  status.textContent=source+' · generated/updated '+date+' · '+cards.length+' financial sections · Saved dashboard state '+(stateAvailable?'included':'not included')+'. Read-only sourced snapshot; verify timing before making financial decisions.';
-  el.innerHTML=cards.join('')||'<p class="small">The export did not include recognizable MF, trading or FX sections.</p>';
+  const el=document.getElementById('wealthLiveSnapshot'),status=document.getElementById('wealthLiveStatus');
+  if(!safeObject(data)||!Array.isArray(data.mf)){
+   status.textContent='Connected source did not provide the expected mutual-fund holdings array; no values can be reliably displayed.';
+   el.textContent='';
+   return;
+  }
+  const overview=wealthOverview(data);
+  status.textContent=source+' · Response '+String(date)+' · '+overview.count+' listed fund/ETF rows · NAV dates '+overview.navDates+
+   ' · '+overview.fallbackCount+' fund(s) needing NAV verification. Read-only, sourced values; not live holdings.';
+  el.innerHTML=overview.html;
  }
-
  async function sync(kind){
   const info=document.getElementById(kind+'Info');
   if(!field()){info.textContent='Enter your private JARVIS access code in Voice Assistant first.';return}
