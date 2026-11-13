@@ -761,7 +761,8 @@ function jarvisSetOrb(next,message,detail){
  function openOfficialVoice(){
   // The ChatGPT site/app owns microphone permissions and speech output.
   // No API request and no external model invocation originate from this shortcut.
-  const tab=window.open(url,'_blank','noopener,noreferrer');
+  const tab=window.open(url,'_blank');
+  if(tab)tab.opener=null;
   if(!tab){
    const info=document.getElementById('voiceStatus');
    if(info)info.textContent='Pop-up blocked. Use the Open ChatGPT Voice link above, then tap Voice inside ChatGPT.';
